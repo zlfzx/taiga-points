@@ -1,0 +1,16 @@
+version: '3.9'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: taiga-points
+    ports:
+      - "${APP_PORT}:${APP_PORT}"
+    env_file:
+      - .env
+    environment:
+      - APP_PORT=${APP_PORT}
+      - TAIGA_BASE_URL=${TAIGA_BASE_URL}
+    restart: unless-stopped
