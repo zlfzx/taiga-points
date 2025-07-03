@@ -12,16 +12,16 @@ import (
 
 func GetMembers(w http.ResponseWriter, r *http.Request) {
 	// get headers auth
-	// auth := r.Header.Get("Authorization")
-	// if auth == "" {
-	// 	render.Status(r, http.StatusUnauthorized)
-	// 	render.JSON(w, r, models.HTTPResponse{
-	// 		StatusCode: http.StatusUnauthorized,
-	// 		StatusText: "Unauthorized",
-	// 		Message:    "Missing authorization header",
-	// 	})
-	// 	return
-	// }
+	auth := r.Header.Get("Authorization")
+	if auth == "" {
+		render.Status(r, http.StatusUnauthorized)
+		render.JSON(w, r, models.HTTPResponse{
+			StatusCode: http.StatusUnauthorized,
+			StatusText: "Unauthorized",
+			Message:    "Missing authorization header",
+		})
+		return
+	}
 
 	// get query params
 	query := r.URL.Query()
@@ -38,15 +38,15 @@ func GetMembers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get memberships
-	req, _ := http.NewRequest("GET", baseURL+"/memberships", nil)
+	req, _ := http.NewRequest("GET", TaigaBaseURL+"/memberships", nil)
 
 	query = req.URL.Query()
 	query.Add("project", projectId)
 	req.URL.RawQuery = query.Encode()
 
-	// req.Header.Set("Authorization", "Bearer "+auth.AuthToken)
+	req.Header.Set("Authorization", auth)
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("x-disable-pagination", "false")
+	req.Header.Set("x-disable-pagination", "True")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -75,7 +75,7 @@ func GetMembers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get points
-	points, err := GetPoints(projectId)
+	points, err := GetPoints(auth, projectId)
 	if err != nil {
 		render.Status(r, http.StatusInternalServerError)
 		render.JSON(w, r, models.HTTPResponse{
@@ -87,7 +87,7 @@ func GetMembers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// get user stories
-	userStories, err := GetUserStories(projectId)
+	userStories, err := GetUserStories(auth, projectId)
 	if err != nil {
 		render.Status(r, http.StatusInternalServerError)
 		render.JSON(w, r, models.HTTPResponse{

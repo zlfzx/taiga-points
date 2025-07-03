@@ -13,6 +13,7 @@ export async function projectsLoader(): Promise<{ projects: Project[] }> {
   const response = await axios.get<{ data: Project[] }>(url, {
     headers: {
       "Content-Type": "application/json",
+      "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
     },
   });
 
@@ -29,6 +30,7 @@ export async function projectLoader(args: LoaderFunctionArgs): Promise<{ project
     const responseProject = await axios.get(`/api/project`, {
         headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
         },
         params: {
             slug: params.slug,

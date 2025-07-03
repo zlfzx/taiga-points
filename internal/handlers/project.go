@@ -12,23 +12,23 @@ import (
 func GetProjects(w http.ResponseWriter, r *http.Request) {
 
 	// get headers auth
-	// auth := r.Header.Get("Authorization")
-	// if auth == "" {
-	// 	render.Status(r, http.StatusUnauthorized)
-	// 	render.JSON(w, r, models.HTTPResponse{
-	// 		StatusCode: http.StatusUnauthorized,
-	// 		StatusText: "Unauthorized",
-	// 		Message:    "Missing authorization header",
-	// 	})
-	// 	return
-	// }
+	auth := r.Header.Get("Authorization")
+	if auth == "" {
+		render.Status(r, http.StatusUnauthorized)
+		render.JSON(w, r, models.HTTPResponse{
+			StatusCode: http.StatusUnauthorized,
+			StatusText: "Unauthorized",
+			Message:    "Missing authorization header",
+		})
+		return
+	}
 
 	// get query params
 	query := r.URL.Query()
 	memberId := query.Get("member")
 
 	// get projects
-	req, _ := http.NewRequest("GET", baseURL+"/projects", nil)
+	req, _ := http.NewRequest("GET", TaigaBaseURL+"/projects", nil)
 
 	if memberId != "" {
 		query = req.URL.Query()
@@ -36,9 +36,9 @@ func GetProjects(w http.ResponseWriter, r *http.Request) {
 		req.URL.RawQuery = query.Encode()
 	}
 
-	// req.Header.Set("Authorization", "Bearer "+auth.AuthToken)
+	req.Header.Set("Authorization", auth)
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("x-disable-pagination", "false")
+	req.Header.Set("x-disable-pagination", "True")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
@@ -54,6 +54,20 @@ func GetProjects(w http.ResponseWriter, r *http.Request) {
 	defer resp.Body.Close()
 
 	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		render.Status(r, resp.StatusCode)
+		var respJSON any
+		if err := json.Unmarshal(body, &respJSON); err != nil {
+			respJSON = string(body)
+		}
+		render.JSON(w, r, models.HTTPResponse{
+			StatusCode: resp.StatusCode,
+			StatusText: http.StatusText(resp.StatusCode),
+			Message:    respJSON,
+		})
+		return
+	}
+
 	var projects []models.Project
 	err = json.Unmarshal(body, &projects)
 	if err != nil {
@@ -74,34 +88,19 @@ func GetProjects(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func GetProjectBySlug(slug string) (project models.Project, err error) {
-	req, _ := http.NewRequest("GET", baseURL+"/projects/by_slug", nil)
-
-	query := req.URL.Query()
-	query.Add("slug", slug)
-	req.URL.RawQuery = query.Encode()
-
-	// req.Header.Set("Authorization", "Bearer "+auth.AuthToken)
-	req.Header.Set("Content-Type", "application/json")
-	// req.Header.Set("x-disable-pagination", "false")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return project, err
-	}
-	defer resp.Body.Close()
-
-	body, _ := io.ReadAll(resp.Body)
-	err = json.Unmarshal(body, &project)
-	if err != nil {
-		return project, err
-	}
-
-	return project, nil
-}
-
 func GetProject(w http.ResponseWriter, r *http.Request) {
+
+	// get headers auth
+	auth := r.Header.Get("Authorization")
+	if auth == "" {
+		render.Status(r, http.StatusUnauthorized)
+		render.JSON(w, r, models.HTTPResponse{
+			StatusCode: http.StatusUnauthorized,
+			StatusText: "Unauthorized",
+			Message:    "Missing authorization header",
+		})
+		return
+	}
 
 	// get query params
 	query := r.URL.Query()
@@ -116,7 +115,46 @@ func GetProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	project, err := GetProjectBySlug(projectSlug)
+	req, _ := http.NewRequest("GET", TaigaBaseURL+"/projects/by_slug", nil)
+
+	query = req.URL.Query()
+	query.Add("slug", projectSlug)
+	req.URL.RawQuery = query.Encode()
+
+	req.Header.Set("Authorization", auth)
+	req.Header.Set("Content-Type", "application/json")
+	// req.Header.Set("x-disable-pagination", "false")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		render.Status(r, http.StatusInternalServerError)
+		render.JSON(w, r, models.HTTPResponse{
+			StatusCode: http.StatusInternalServerError,
+			StatusText: "Internal Server Error",
+			Message:    err.Error(),
+		})
+		return
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		render.Status(r, resp.StatusCode)
+		var respJSON any
+		if err := json.Unmarshal(body, &respJSON); err != nil {
+			respJSON = string(body)
+		}
+		render.JSON(w, r, models.HTTPResponse{
+			StatusCode: resp.StatusCode,
+			StatusText: http.StatusText(resp.StatusCode),
+			Message:    respJSON,
+		})
+		return
+	}
+
+	var project models.Project
+	err = json.Unmarshal(body, &project)
 	if err != nil {
 		render.Status(r, http.StatusInternalServerError)
 		render.JSON(w, r, models.HTTPResponse{

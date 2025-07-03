@@ -39,6 +39,7 @@ function Project() {
                 const response = await axios.get<{ data: Member[] }>("/api/members", {
                     headers: {
                         "Content-Type": "application/json",
+                        "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
                     },
                     params: {
                         project: project.id,
@@ -207,7 +208,7 @@ function Project() {
                                         <TableRow key={story.id || index}>
                                             <TableCell>{index + 1}</TableCell>
                                             <TableCell className="text-wrap">
-                                                <b>[{swimlane}]</b> {story.subject}
+                                                {swimlane && <b>[{swimlane}] </b>}{story.subject}
                                             </TableCell>
                                             <TableCell>
                                                 <Badge variant={"secondary"} className="bg-white" style={{ color: statusColor }}>{status}</Badge>

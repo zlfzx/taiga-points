@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"taiga-points/internal/handlers"
 
@@ -14,6 +15,8 @@ import (
 )
 
 func LoadRouters(embed embed.FS) (r *chi.Mux) {
+
+	handlers.TaigaBaseURL = os.Getenv("TAIGA_BASE_URL") + "/api/v1"
 
 	r = chi.NewRouter()
 	r.Use(cors.Handler(cors.Options{

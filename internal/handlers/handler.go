@@ -4,17 +4,14 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"os"
 	"taiga-points/internal/models"
 )
 
-var (
-	baseURL = os.Getenv("TAIGA_BASE_URL") + "/api/v1"
-)
+var TaigaBaseURL string
 
-func GetUserStories(projectId string) (userStories []models.UserStory, err error) {
+func GetUserStories(auth, projectId string) (userStories []models.UserStory, err error) {
 
-	req, _ := http.NewRequest("GET", baseURL+"/userstories", nil)
+	req, _ := http.NewRequest("GET", TaigaBaseURL+"/userstories", nil)
 
 	query := req.URL.Query()
 	query.Add("project", projectId)
@@ -22,7 +19,7 @@ func GetUserStories(projectId string) (userStories []models.UserStory, err error
 	query.Add("status__is_archived", "false")
 	req.URL.RawQuery = query.Encode()
 
-	// req.Header.Set("Authorization", "Bearer "+auth.AuthToken)
+	req.Header.Set("Authorization", auth)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("x-disable-pagination", "false")
 
@@ -42,16 +39,16 @@ func GetUserStories(projectId string) (userStories []models.UserStory, err error
 	return
 }
 
-func GetPoints(projectId string) (points []models.Point, err error) {
+func GetPoints(auth, projectId string) (points []models.Point, err error) {
 	// auth := GetAuth()
 
-	req, _ := http.NewRequest("GET", baseURL+"/points", nil)
+	req, _ := http.NewRequest("GET", TaigaBaseURL+"/points", nil)
 
 	query := req.URL.Query()
 	query.Add("project", projectId)
 	req.URL.RawQuery = query.Encode()
 
-	// req.Header.Set("Authorization", "Bearer "+auth.AuthToken)
+	req.Header.Set("Authorization", auth)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("x-disable-pagination", "false")
 

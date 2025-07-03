@@ -48,7 +48,7 @@ function Projects() {
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-5 mt-5">
                         {projects.map((item, index) => (
-                            <Card key={index} className="transition-all duration-100 hover:shadow-xl hover:bg-white/50 hover:border-white/30 bg-white/40 backdrop-blur-md">
+                            <Card key={index} className="justify-between transition-all duration-100 hover:shadow-xl hover:bg-white/50 hover:border-white/30 bg-white/40 backdrop-blur-md">
                                 <CardHeader className="flex flex-col items-center justify-center">
                                     <Avatar className="w-24 h-24 rounded mb-3">
                                         <AvatarImage src={item.logo_big_url ? item.logo_big_url : projectImg} />

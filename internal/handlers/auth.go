@@ -30,7 +30,7 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 	}
 	body, _ := json.Marshal(payload)
 
-	resp, err := http.Post(baseURL+"/auth", "application/json", bytes.NewBuffer(body))
+	resp, err := http.Post(TaigaBaseURL+"/auth", "application/json", bytes.NewBuffer(body))
 	if err != nil {
 		render.Status(r, http.StatusInternalServerError)
 		render.JSON(w, r, models.HTTPResponse{
@@ -82,7 +82,7 @@ func RefreshAuth(w http.ResponseWriter, r *http.Request) {
 	}
 
 	body, _ := json.Marshal(payload)
-	resp, err := http.Post(baseURL+"/auth/refresh", "application/json", bytes.NewBuffer(body))
+	resp, err := http.Post(TaigaBaseURL+"/auth/refresh", "application/json", bytes.NewBuffer(body))
 	if err != nil {
 		render.Status(r, http.StatusInternalServerError)
 		render.JSON(w, r, models.HTTPResponse{
