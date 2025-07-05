@@ -6,16 +6,13 @@ import (
 	"net/http"
 	"strconv"
 	"taiga-points/internal/models"
-
-	"github.com/go-chi/render"
 )
 
 func GetMembers(w http.ResponseWriter, r *http.Request) {
 	// get headers auth
 	auth := r.Header.Get("Authorization")
 	if auth == "" {
-		render.Status(r, http.StatusUnauthorized)
-		render.JSON(w, r, models.HTTPResponse{
+		responseJSON(w, r, models.HTTPResponse{
 			StatusCode: http.StatusUnauthorized,
 			StatusText: "Unauthorized",
 			Message:    "Missing authorization header",
@@ -28,8 +25,7 @@ func GetMembers(w http.ResponseWriter, r *http.Request) {
 	projectId := query.Get("project")
 
 	if projectId == "" {
-		render.Status(r, http.StatusBadRequest)
-		render.JSON(w, r, models.HTTPResponse{
+		responseJSON(w, r, models.HTTPResponse{
 			StatusCode: http.StatusBadRequest,
 			StatusText: "Bad Request",
 			Message:    "Missing project id",
@@ -51,8 +47,7 @@ func GetMembers(w http.ResponseWriter, r *http.Request) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		render.Status(r, http.StatusInternalServerError)
-		render.JSON(w, r, models.HTTPResponse{
+		responseJSON(w, r, models.HTTPResponse{
 			StatusCode: http.StatusInternalServerError,
 			StatusText: "Internal Server Error",
 			Message:    err.Error(),
@@ -65,8 +60,7 @@ func GetMembers(w http.ResponseWriter, r *http.Request) {
 	var memberships []models.Membership
 	err = json.Unmarshal(body, &memberships)
 	if err != nil {
-		render.Status(r, http.StatusInternalServerError)
-		render.JSON(w, r, models.HTTPResponse{
+		responseJSON(w, r, models.HTTPResponse{
 			StatusCode: http.StatusInternalServerError,
 			StatusText: "Internal Server Error",
 			Message:    err.Error(),
@@ -77,8 +71,7 @@ func GetMembers(w http.ResponseWriter, r *http.Request) {
 	// get points
 	points, err := GetPoints(auth, projectId)
 	if err != nil {
-		render.Status(r, http.StatusInternalServerError)
-		render.JSON(w, r, models.HTTPResponse{
+		responseJSON(w, r, models.HTTPResponse{
 			StatusCode: http.StatusInternalServerError,
 			StatusText: "Internal Server Error",
 			Message:    err.Error(),
@@ -89,8 +82,7 @@ func GetMembers(w http.ResponseWriter, r *http.Request) {
 	// get user stories
 	userStories, err := GetUserStories(auth, projectId)
 	if err != nil {
-		render.Status(r, http.StatusInternalServerError)
-		render.JSON(w, r, models.HTTPResponse{
+		responseJSON(w, r, models.HTTPResponse{
 			StatusCode: http.StatusInternalServerError,
 			StatusText: "Internal Server Error",
 			Message:    err.Error(),
@@ -140,8 +132,7 @@ func GetMembers(w http.ResponseWriter, r *http.Request) {
 
 	}
 
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, models.HTTPResponse{
+	responseJSON(w, r, models.HTTPResponse{
 		StatusCode: http.StatusOK,
 		StatusText: "OK",
 		Data:       memberships,

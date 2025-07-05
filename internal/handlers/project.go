@@ -93,8 +93,7 @@ func GetProject(w http.ResponseWriter, r *http.Request) {
 	// get headers auth
 	auth := r.Header.Get("Authorization")
 	if auth == "" {
-		render.Status(r, http.StatusUnauthorized)
-		render.JSON(w, r, models.HTTPResponse{
+		responseJSON(w, r, models.HTTPResponse{
 			StatusCode: http.StatusUnauthorized,
 			StatusText: "Unauthorized",
 			Message:    "Missing authorization header",
@@ -106,8 +105,7 @@ func GetProject(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	projectSlug := query.Get("slug")
 	if projectSlug == "" {
-		render.Status(r, http.StatusBadRequest)
-		render.JSON(w, r, models.HTTPResponse{
+		responseJSON(w, r, models.HTTPResponse{
 			StatusCode: http.StatusBadRequest,
 			StatusText: "Bad Request",
 			Message:    "Missing project slug",
@@ -128,8 +126,7 @@ func GetProject(w http.ResponseWriter, r *http.Request) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		render.Status(r, http.StatusInternalServerError)
-		render.JSON(w, r, models.HTTPResponse{
+		responseJSON(w, r, models.HTTPResponse{
 			StatusCode: http.StatusInternalServerError,
 			StatusText: "Internal Server Error",
 			Message:    err.Error(),
@@ -140,12 +137,11 @@ func GetProject(w http.ResponseWriter, r *http.Request) {
 
 	body, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		render.Status(r, resp.StatusCode)
 		var respJSON any
 		if err := json.Unmarshal(body, &respJSON); err != nil {
 			respJSON = string(body)
 		}
-		render.JSON(w, r, models.HTTPResponse{
+		responseJSON(w, r, models.HTTPResponse{
 			StatusCode: resp.StatusCode,
 			StatusText: http.StatusText(resp.StatusCode),
 			Message:    respJSON,
@@ -156,8 +152,7 @@ func GetProject(w http.ResponseWriter, r *http.Request) {
 	var project models.Project
 	err = json.Unmarshal(body, &project)
 	if err != nil {
-		render.Status(r, http.StatusInternalServerError)
-		render.JSON(w, r, models.HTTPResponse{
+		responseJSON(w, r, models.HTTPResponse{
 			StatusCode: http.StatusInternalServerError,
 			StatusText: "Internal Server Error",
 			Message:    err.Error(),
@@ -165,8 +160,7 @@ func GetProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, models.HTTPResponse{
+	responseJSON(w, r, models.HTTPResponse{
 		StatusCode: http.StatusOK,
 		StatusText: "OK",
 		Data:       project,

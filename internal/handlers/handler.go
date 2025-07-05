@@ -5,9 +5,24 @@ import (
 	"io"
 	"net/http"
 	"taiga-points/internal/models"
+
+	"github.com/go-chi/render"
 )
 
 var TaigaBaseURL string
+
+// func getAuthToken(r *http.Request) string {
+// 	auth := r.Header.Get("Authorization")
+// 	if auth == "" {
+// 		return ""
+// 	}
+// 	return auth
+// }
+
+func responseJSON(w http.ResponseWriter, r *http.Request, response models.HTTPResponse) {
+	render.Status(r, response.StatusCode)
+	render.JSON(w, r, response)
+}
 
 func GetUserStories(auth, projectId string) (userStories []models.UserStory, err error) {
 
