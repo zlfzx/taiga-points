@@ -1,4 +1,3 @@
-import axios from "axios";
 import { useEffect, useState } from "react";
 import { Link, useLoaderData } from "react-router";
 import type { Member } from "../models/member";
@@ -16,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { WindowContent, WindowHeader, WindowLayout } from "@/components/window-layout";
+import api from "@/lib/axios";
 
 function Project() {
     const { project } = useLoaderData<{ project: ProjectModel }>();
@@ -36,11 +36,7 @@ function Project() {
         const getMembers = async () => {
             setIsLoadMembers(true);
             try {
-                const response = await axios.get<{ data: Member[] }>("/api/members", {
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${localStorage.getItem("access_token")}`,
-                    },
+                const response = await api.get<{ data: Member[] }>("/api/members", {
                     params: {
                         project: project.id,
                     },
