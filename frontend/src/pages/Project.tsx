@@ -21,7 +21,8 @@ function Project() {
     const { project } = useLoaderData<{ project: ProjectModel }>();
     const [isLoadMembers, setIsLoadMembers] = useState<boolean>(false);
     const [members, setMembers] = useState<Member[]>([]);
-    const [modalMember, setModalMember] = useState<Member | null>(null);
+    const [member, setMember] = useState<Member | null>(null);
+    const [openModalMember, setOpenModalMember] = useState<boolean>(false);
     const [search, setSearch] = useState<string>("");
     const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
 
@@ -31,6 +32,27 @@ function Project() {
         const matchesRole = selectedRoles.length === 0 || selectedRoles.includes(member.role_name);
         return matchesName && matchesRole;
     });
+
+    const getMember = async (memberId: number) => {
+        try {
+            const response = await api.get<{ data: Member }>(`/api/member/${memberId}`);
+            return response.data.data;
+        } catch (error) {
+            console.error("Error fetching member details:", error);
+            return null;
+        }
+    };
+
+    const detailMember = async (memberId: number) => {
+        setOpenModalMember(true);
+        setMember(null); // Reset member state before fetching new data
+        const member = await getMember(memberId);
+        if (member) {
+            setMember(member);
+        } else {
+            console.error("Member not found");
+        }
+    };
 
     useEffect(() => {
         const getMembers = async () => {
@@ -42,7 +64,7 @@ function Project() {
                     },
                 });
                 setMembers(response.data.data);
-                setModalMember(null);
+                setMember(null);
                 setIsLoadMembers(false);
             } catch (error) {
                 console.error("Error fetching members:", error);
@@ -133,9 +155,9 @@ function Project() {
                                                 <Avatar className="w-24 h-24 mb-3">
                                                     <AvatarImage src={member.photo ? member.photo : userImg} />
                                                 </Avatar>
-                                                <h3 className="text-lg font-semibold">{member.full_name}</h3>
+                                                <h3 className="text-lg font-semibold text-center">{member.full_name}</h3>
                                                 <p className="text-sm text-muted-foreground">{member.role_name}</p>
-                                                <Button variant="secondary" size="sm" onClick={() => setModalMember(member)} className="bg-white cursor-pointer mt-3">Detail</Button>
+                                                <Button variant="secondary" size="sm" onClick={() => detailMember(member.id)} className="bg-white cursor-pointer mt-3">Detail</Button>
                                             </CardContent>
                                         </Card>
                                     ))
@@ -147,15 +169,20 @@ function Project() {
             </div>
 
 
-            <Dialog open={!!modalMember} onOpenChange={(open) => {
-                if (!open) {
-                    setModalMember(null);
-                }
-            }}>
+            <Dialog open={openModalMember} onOpenChange={setOpenModalMember}>
                 <DialogContent className="sm:max-w-7xl max-w-full bg-white/80 backdrop-blur-md">
                     <DialogHeader>
-                        <DialogTitle>{modalMember?.full_name}</DialogTitle>
-                        <DialogDescription>{modalMember?.role_name}</DialogDescription>
+                        {member ? (
+                            <>
+                                <DialogTitle>{member?.full_name}</DialogTitle>
+                                <DialogDescription>{member?.role_name}</DialogDescription>
+                            </>
+                        ) : (
+                            <>
+                                <Skeleton className="h-6 w-1/4 bg-gray-400" />
+                                <Skeleton className="h-6 w-1/6 bg-gray-300 mt-2" />
+                            </>
+                        )}
                     </DialogHeader>
 
                     <div className="overflow-y-auto max-h-[80vh]">
@@ -169,7 +196,7 @@ function Project() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {modalMember && modalMember.stories.map((story, index) => {
+                                {member && Array.isArray(member.stories) && member.stories.map((story, index) => {
                                     let status = "";
                                     let statusColor = "";
                                     if (project.us_statuses && Array.isArray(project.us_statuses)) {
@@ -190,7 +217,7 @@ function Project() {
                                         });
                                     }
 
-                                    const pointID = story.points[modalMember.role]
+                                    const pointID = story.points[member.role]
                                     let sp = "0";
                                     if (pointID && Array.isArray(project.points)) {
                                         project.points.forEach((point) => {
@@ -213,11 +240,36 @@ function Project() {
                                         </TableRow>
                                     )
                                 })}
+                                {member && member.stories.length === 0 && (
+                                    <TableRow>
+                                        <TableCell colSpan={4} className="text-center text-muted-foreground py-10">
+                                            No stories found for this member.
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                                {!member && (
+                                    Array.from({ length: 3 }).map((_, i) => (
+                                        <TableRow key={i}>
+                                            <TableCell>
+                                                <Skeleton className="h-6 w-8 bg-gray-300" />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Skeleton className={`h-6 ${i === 0 ? "w-80" : i === 1 ? "w-72" : "w-96"} bg-gray-300`} />
+                                            </TableCell>
+                                            <TableCell>
+                                                <Skeleton className={`h-6 ${i === 0 ? "w-32" : i === 1 ? "w-20" : "w-40"} bg-gray-300`} />
+                                            </TableCell>
+                                            <TableCell className="flex justify-center">
+                                                <Skeleton className="h-6 w-12 bg-gray-300" />
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                )}
                             </TableBody>
                             <TableFooter>
                                 <TableRow>
                                     <TableHead colSpan={3} className="text-right">Total Story Point</TableHead>
-                                    <TableHead className="text-center">{modalMember?.total_point}</TableHead>
+                                    <TableHead className="text-center">{member?.total_point || "0"}</TableHead>
                                 </TableRow>
                             </TableFooter>
                         </Table>

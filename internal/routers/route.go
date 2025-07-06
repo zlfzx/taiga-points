@@ -38,6 +38,7 @@ func LoadRouters(embed embed.FS) (r *chi.Mux) {
 		r.Get("/project", handlers.GetProject)
 		// r.Get("/roles", handlers.GetRoles)
 		r.Get("/members", handlers.GetMembers)
+		r.Get("/member/{memberId}", handlers.GetMember)
 	})
 
 	// static file server
