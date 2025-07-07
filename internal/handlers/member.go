@@ -9,6 +9,8 @@ import (
 	"taiga-points/internal/models"
 	"time"
 
+	"slices"
+
 	"github.com/go-chi/chi/v5"
 )
 
@@ -222,35 +224,36 @@ func GetMember(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// initialize member's total point and stories
 	member.Stories = make([]models.UserStory, 0)
 
+	// create a map of points for quick lookup
+	pointMap := make(map[int]float64)
+	for _, point := range points {
+		pointMap[point.ID] = point.Value
+	}
+
+	role := strconv.Itoa(member.RoleID)
+
 	for _, userStory := range userStories {
-		// check if member.user_id is in userStory.assigned_users
-		for _, assignedUser := range userStory.AssignedUsers {
-			if member.UserID == assignedUser {
 
-				// get points from user story
-				point := 0.0
-				// remainingPoint := 0.0
-				role := strconv.Itoa(member.RoleID)
-				if _, ok := userStory.Points[role]; ok {
-					// get point value
-					for _, pointValue := range points {
-						if pointValue.ID == userStory.Points[role] {
-							point = pointValue.Value
-							// remainingPoint += point
-							break
-						}
-					}
-				}
-
-				// insert subject to points
-				// memberships[i].Stories[userStory.Subject] = point
-				member.Stories = append(member.Stories, userStory)
-				member.TotalPoint += point
-				// memberships[i].RemainingPoint += remainingPoint
-			}
+		// check if user story is assigned to the member
+		isAssigned := slices.Contains(userStory.AssignedUsers, member.UserID)
+		if !isAssigned {
+			continue // skip if user story is not assigned to the member
 		}
+
+		// append user story to member's stories
+		member.Stories = append(member.Stories, userStory)
+
+		// check if user story has points for the member's role
+		pointID, ok := userStory.Points[role]
+		if !ok {
+			continue // skip if no points assigned for the member's role
+		}
+		point := pointMap[pointID]
+		member.TotalPoint += point
+
 	}
 
 	responseJSON(w, r, models.HTTPResponse{
