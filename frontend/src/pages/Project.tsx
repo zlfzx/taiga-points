@@ -170,7 +170,7 @@ function Project() {
 
 
             <Dialog open={openModalMember} onOpenChange={setOpenModalMember}>
-                <DialogContent className="sm:max-w-7xl max-w-full bg-white/80 backdrop-blur-md">
+                <DialogContent className="sm:max-w-7xl max-w-full bg-white/80 backdrop-blur-md" aria-describedby={undefined}>
                     <DialogHeader>
                         {member ? (
                             <>
@@ -179,6 +179,7 @@ function Project() {
                             </>
                         ) : (
                             <>
+                                <DialogTitle className="sr-only">Loading...</DialogTitle>
                                 <Skeleton className="h-6 w-1/4 bg-gray-400" />
                                 <Skeleton className="h-6 w-1/6 bg-gray-300 mt-2" />
                             </>
