@@ -16,7 +16,7 @@ deploy to production:
     - outline
     - betacoreapi
   script:
-    - sudo cd $PRODUCTION_DIR
+    - cd $PRODUCTION_DIR
     - pwd
     - whoami
     - sudo su
