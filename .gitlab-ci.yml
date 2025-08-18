@@ -16,6 +16,7 @@ deploy to production:
     - outline
     - betacoreapi
   before_script:
+    - sudo su
     - sudo cd $PRODUCTION_DIR
     - export APP_PORT=$APP_PORT
     - export TAIGA_BASE_URL=$TAIGA_BASE_URL
