@@ -17,8 +17,8 @@ deploy to production:
     - betacoreapi
   before_script:
     - sudo cd $PRODUCTION_DIR
-    - sudo export APP_PORT=$APP_PORT
-    - sudo export TAIGA_BASE_URL=$TAIGA_BASE_URL
+    - export APP_PORT=$APP_PORT
+    - export TAIGA_BASE_URL=$TAIGA_BASE_URL
   script:
     - whoami
     - sudo git config --global --add safe.directory $PRODUCTION_DIR
@@ -26,6 +26,6 @@ deploy to production:
     - sudo chown gitlab-runner:gitlab-runner $PRODUCTION_DIR -R
     - sudo git branch
     - sudo git status
-    - sudo docker-compose up -d --build
-    - sudo docker image prune -f -a
-    - sudo docker ps
+    - docker-compose up -d --build
+    - docker image prune -f -a
+    - docker ps
