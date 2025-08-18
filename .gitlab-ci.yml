@@ -17,6 +17,8 @@ deploy to production:
     - whoami
     - sudo git config --global --add safe.directory $PRODUCTION_DIR
     - sudo git pull http://$GIT_USER:$GIT_PASS@dev.fast-8.com:9874/FAST-8/taiga-points.git main
+    - sudo chown gitlab-runner:gitlab-runner $PRODUCTION_DIR
     - sudo git branch
     - sudo git status
     - docker-compose up -d --build
+    - docker ps
