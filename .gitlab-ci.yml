@@ -16,8 +16,9 @@ deploy to production:
     - outline
     - betacoreapi
   before_script:
-    - sudo cd $PRODUCTION_DIR
+    - cd $PRODUCTION_DIR
   script:
+    - pwd
     - whoami
     - sudo su
     - export APP_PORT=$APP_PORT
