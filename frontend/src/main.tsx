@@ -17,7 +17,7 @@ import ProjectScrum from './pages/ProjectScrum.tsx'
 import ProjectSetting from './pages/ProjectSetting.tsx'
 import ProjectScrumDetail from './pages/ProjectScrumDetail.tsx'
 
-axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
+axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL;
 
 const router = createBrowserRouter([
   {
