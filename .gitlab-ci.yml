@@ -22,11 +22,12 @@ deploy to production:
     - sudo su
     - export APP_PORT=$APP_PORT
     - export TAIGA_BASE_URL=$TAIGA_BASE_URL
+    - printenv
     - sudo git config --global --add safe.directory $PRODUCTION_DIR
     - sudo git pull http://$GIT_USER:$GIT_PASS@dev.fast-8.com:9874/FAST-8/taiga-points.git main
     - sudo chown gitlab-runner:gitlab-runner $PRODUCTION_DIR -R
     - sudo git branch
     - sudo git status
-    - docker-compose up -d --build
-    - docker image prune -f -a
-    - docker ps
+    # - docker-compose up -d --build
+    # - docker image prune -f -a
+    # - docker ps
