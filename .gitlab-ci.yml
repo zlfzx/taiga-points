@@ -1,0 +1,22 @@
+stages:
+  - Deploy Production
+
+deploy to production:
+  only:
+      refs:
+        - master
+  stage: Deploy Production
+  tags:
+    - internal
+    - taiga
+    - outline
+    - betacoreapi
+  before_script:
+    - cd $PRODUCTION_DIR
+  script:
+    - whoami
+    - sudo git config --global --add safe.directory $PRODUCTION_DIR
+    - sudo git pull http://$GIT_USER:$GIT_PASS@dev.fast-8.com:9874/FAST-8/taiga-points.git master
+    - git branch
+    - git status
+    - docker-compose up -d --build
