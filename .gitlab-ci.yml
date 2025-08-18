@@ -16,12 +16,12 @@ deploy to production:
     - outline
     - betacoreapi
   before_script:
-    - sudo su
     - sudo cd $PRODUCTION_DIR
-    - export APP_PORT=$APP_PORT
-    - export TAIGA_BASE_URL=$TAIGA_BASE_URL
   script:
     - whoami
+    - sudo su
+    - export APP_PORT=$APP_PORT
+    - export TAIGA_BASE_URL=$TAIGA_BASE_URL
     - sudo git config --global --add safe.directory $PRODUCTION_DIR
     - sudo git pull http://$GIT_USER:$GIT_PASS@dev.fast-8.com:9874/FAST-8/taiga-points.git main
     - sudo chown gitlab-runner:gitlab-runner $PRODUCTION_DIR -R
