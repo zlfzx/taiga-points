@@ -9,6 +9,12 @@ export interface Project {
     points: Point[];
     us_statuses: UserStoryStatus[];
     swimlanes: Swimlane[];
+    i_am_owner: boolean;
+    i_am_admin: boolean;
+    i_am_member: boolean;
+    max_points: number;
+    role_points: number[];
+    status_points: number[];
     // members: Member[];
 }
 

@@ -21,7 +21,7 @@ return (
     <CardContent
       data-slot="card-content"
       className={cn(
-        "p-6 rounded-b-xl bg-gray-100x bg-white/20 backdrop-blur-md",
+        "p-6 rounded-b-xl bg-gray-100x bg-white/20 backdrop-blur-lg border border-t-0 border-white/40",
         className
       )}
       {...props}
@@ -36,7 +36,7 @@ function WindowLayout({ className, ...props }: React.ComponentProps<"div">) {
     <Card
       data-slot="card"
       className={cn(
-        "max-w-full mx-auto bg-gray-100x shadow-lg py-0 gap-0 bg-white/10 backdrop-blur-md",
+        "max-w-full mx-auto bg-gray-100x shadow-lg py-0 gap-0 bg-white/10 backdrop-blur-md shadow-white/60 border-none",
         className
       )}
       {...props}

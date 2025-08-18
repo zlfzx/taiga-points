@@ -38,8 +38,6 @@ function Login() {
 
             if (response.status === 200) {
                 // Handle successful login
-                console.log("Login successful:", response.data);
-
                 const data: User = response.data.data;
 
                 // Store the token in local storage
@@ -75,7 +73,7 @@ function Login() {
         <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
             <div className="w-full max-w-sm">
 
-                <Card className="bg-white/70 backdrop-blur-md shadow-lg hover:shadow-xl transition-shadow duration-300">
+                <Card className="bg-white/60 backdrop-blur-md shadow-lg hover:shadow-xl transition-shadow duration-300">
                     <CardHeader className="text-center">
                         <CardTitle className="text-xl">Welcome back</CardTitle>
                         <CardDescription>

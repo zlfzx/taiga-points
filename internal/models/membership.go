@@ -14,8 +14,9 @@ type Membership struct {
 	Stories           []UserStory `json:"stories"`
 	TodoStories       int         `json:"todo_stories"`
 	InProgressStories int         `json:"in_progress_stories"`
+	MaxPoint          float64     `json:"max_point"`
 	RemainingPoint    float64     `json:"remaining_point"`
-	CompletedPoint    float64     `json:"completed_point"`
-	TotalPoint        float64     `json:"total_point"`
-	CreatedAt         string      `json:"created_at"`
+	// CompletedPoint    float64     `json:"completed_point"`
+	TotalPoint float64 `json:"total_point"`
+	CreatedAt  string  `json:"created_at"`
 }

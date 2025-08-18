@@ -8,7 +8,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func GetMembers(w http.ResponseWriter, r *http.Request) {
+func GetMilestones(w http.ResponseWriter, r *http.Request) {
 	// get auth token from context
 	auth := r.Context().Value(contracts.AuthToken).(string)
 
@@ -19,12 +19,13 @@ func GetMembers(w http.ResponseWriter, r *http.Request) {
 		responseJSON(w, r, models.HTTPResponse{
 			StatusCode: http.StatusBadRequest,
 			StatusText: "Bad Request",
-			Message:    "Missing project id",
+			Message:    "Missing project ID",
 		})
 		return
 	}
 
-	memberships, err := app.Services.Taiga.GetMembers(auth, projectID)
+	// get milestones
+	milestones, err := app.Services.Taiga.GetMilestones(auth, projectID)
 	if err != nil {
 		responseHTTPError(w, r, err)
 		return
@@ -33,19 +34,27 @@ func GetMembers(w http.ResponseWriter, r *http.Request) {
 	responseJSON(w, r, models.HTTPResponse{
 		StatusCode: http.StatusOK,
 		StatusText: "OK",
-		Data:       memberships,
+		Data:       milestones,
 	})
-
 }
 
-func GetMember(w http.ResponseWriter, r *http.Request) {
+func GetMilestone(w http.ResponseWriter, r *http.Request) {
 	// get auth token from context
 	auth := r.Context().Value(contracts.AuthToken).(string)
 
-	// get memberId from URL
-	memberID := chi.URLParam(r, "memberID")
+	// get query params
+	milestoneID := chi.URLParam(r, "milestoneID")
+	if milestoneID == "" {
+		responseJSON(w, r, models.HTTPResponse{
+			StatusCode: http.StatusBadRequest,
+			StatusText: "Bad Request",
+			Message:    "Missing milestone ID",
+		})
+		return
+	}
 
-	member, err := app.Services.Taiga.GetMember(auth, memberID)
+	// get milestone
+	milestone, err := app.Services.Taiga.GetMilestone(auth, milestoneID)
 	if err != nil {
 		responseHTTPError(w, r, err)
 		return
@@ -54,6 +63,6 @@ func GetMember(w http.ResponseWriter, r *http.Request) {
 	responseJSON(w, r, models.HTTPResponse{
 		StatusCode: http.StatusOK,
 		StatusText: "OK",
-		Data:       member,
+		Data:       milestone,
 	})
 }

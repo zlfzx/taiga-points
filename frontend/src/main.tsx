@@ -7,12 +7,15 @@ import { projectsLoader, projectLoader } from './loaders/projectLoader.ts'
 import Login from './pages/Login.tsx'
 import Projects from './pages/Projects.tsx'
 import Project from './pages/Project.tsx'
-import P from './pages/P.tsx'
 import axios from 'axios'
 import { protectedLoader } from './auth/protectedLoader.ts'
 import Fallback from './components/fallback.tsx'
 import { ErrorBoundary } from './components/error-boundary.tsx'
 import { isAuthenticated } from './auth/auth.ts'
+import ProjectMember from './pages/ProjectMember.tsx'
+import ProjectScrum from './pages/ProjectScrum.tsx'
+import ProjectSetting from './pages/ProjectSetting.tsx'
+import ProjectScrumDetail from './pages/ProjectScrumDetail.tsx'
 
 axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080'
 
@@ -41,16 +44,31 @@ const router = createBrowserRouter([
             Component: Projects,
           },
           {
+            id: 'project',
             path: 'project/:slug',
             loader: projectLoader,
             Component: Project,
+            children: [
+              {
+                index: true,
+                Component: ProjectMember,
+              },
+              {
+                path: 'scrum',
+                Component: ProjectScrum,
+              },
+              {
+                path: 'scrum/:milestoneId',
+                Component: ProjectScrumDetail,
+              },
+              {
+                path: 'settings',
+                Component: ProjectSetting,
+              }
+            ],
           },
-          {
-            path: 'p',
-            Component: P
-          }
         ]
-      }
+      },
     ],
     HydrateFallback: Fallback,
     ErrorBoundary: ErrorBoundary

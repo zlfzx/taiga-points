@@ -5,7 +5,6 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
-	"os"
 	"strings"
 	"taiga-points/internal/handlers"
 
@@ -15,8 +14,6 @@ import (
 )
 
 func LoadRouters(embed embed.FS) (r *chi.Mux) {
-
-	handlers.TaigaBaseURL = os.Getenv("TAIGA_BASE_URL") + "/api/v1"
 
 	r = chi.NewRouter()
 	r.Use(cors.Handler(cors.Options{
@@ -34,11 +31,20 @@ func LoadRouters(embed embed.FS) (r *chi.Mux) {
 			r.Post("/", handlers.Auth)
 			r.Post("/refresh", handlers.RefreshAuth)
 		})
-		r.Get("/projects", handlers.GetProjects)
-		r.Get("/project", handlers.GetProject)
-		// r.Get("/roles", handlers.GetRoles)
-		r.Get("/members", handlers.GetMembers)
-		r.Get("/member/{memberId}", handlers.GetMember)
+
+		r.Group(func(r chi.Router) {
+			r.Use(handlers.AuthMiddleware)
+			r.Get("/projects", handlers.GetProjects)
+			r.Get("/project", handlers.GetProject)
+			r.Post("/project/settings", handlers.SetProjectSettings)
+			// r.Get("/roles", handlers.GetRoles)
+
+			r.Get("/members", handlers.GetMembers)
+			r.Get("/member/{memberID:[0-9]+}", handlers.GetMember)
+
+			r.Get("/milestones", handlers.GetMilestones)
+			r.Get("/milestone/{milestoneID:[0-9]+}", handlers.GetMilestone)
+		})
 	})
 
 	// static file server

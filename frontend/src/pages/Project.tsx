@@ -1,283 +1,63 @@
-import { useEffect, useState } from "react";
-import { Link, useLoaderData } from "react-router";
-import type { Member } from "../models/member";
-import type { Project as ProjectModel } from "../models/project";
-import userImg from "../assets/user.png";
-import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Link, Outlet, useLoaderData } from "react-router";
+import type { Project as ProjectModel } from "@/models/project";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { WindowContent, WindowHeader, WindowLayout } from "@/components/window-layout";
-import api from "@/lib/axios";
 
 function Project() {
-    const { project } = useLoaderData<{ project: ProjectModel }>();
-    const [isLoadMembers, setIsLoadMembers] = useState<boolean>(false);
-    const [members, setMembers] = useState<Member[]>([]);
-    const [member, setMember] = useState<Member | null>(null);
-    const [openModalMember, setOpenModalMember] = useState<boolean>(false);
-    const [search, setSearch] = useState<string>("");
-    const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
-
-    // Filter members by search (full name) and selected roles
-    const filteredMembers = members.filter(member => {
-        const matchesName = member.full_name.toLowerCase().includes(search.toLowerCase());
-        const matchesRole = selectedRoles.length === 0 || selectedRoles.includes(member.role_name);
-        return matchesName && matchesRole;
-    });
-
-    const getMember = async (memberId: number) => {
-        try {
-            const response = await api.get<{ data: Member }>(`/api/member/${memberId}`);
-            return response.data.data;
-        } catch (error) {
-            console.error("Error fetching member details:", error);
-            return null;
-        }
-    };
-
-    const detailMember = async (memberId: number) => {
-        setOpenModalMember(true);
-        setMember(null); // Reset member state before fetching new data
-        const member = await getMember(memberId);
-        if (member) {
-            setMember(member);
-        } else {
-            console.error("Member not found");
-        }
-    };
-
-    useEffect(() => {
-        const getMembers = async () => {
-            setIsLoadMembers(true);
-            try {
-                const response = await api.get<{ data: Member[] }>("/api/members", {
-                    params: {
-                        project: project.id,
-                    },
-                });
-                setMembers(response.data.data);
-                setMember(null);
-                setIsLoadMembers(false);
-            } catch (error) {
-                console.error("Error fetching members:", error);
-            }
-        };
-
-        console.log("project", project);
-
-        getMembers();
-    }, [project]);
+    const project = useLoaderData<ProjectModel>();
 
     return (
-        <>
-            <div className="container mx-auto p-6">
-                <WindowLayout>
-                    <WindowHeader>
-                        <div className="flex flex-wrap">
-                            <div className="flex items-center justify-center">
-                                <Link to="/projects" className="w-full">
-                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-8">
-                                        <path strokeLinecap="round" strokeLinejoin="round" d="M7.49 12 3.74 8.248m0 0 3.75-3.75m-3.75 3.75h16.5V19.5" />
+        <div className="container mx-auto px-6 py-12 min-h-fullx min-h-screen">
+            <WindowLayout>
+                <WindowHeader>
+                    <div className="flex flex-wrap">
+                        <div className="flex items-center justify-center">
+                            <Link to="/projects" className="w-full">
+                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="size-8">
+                                    <path fillRule="evenodd" d="M2.625 6.75a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Zm4.875 0A.75.75 0 0 1 8.25 6h12a.75.75 0 0 1 0 1.5h-12a.75.75 0 0 1-.75-.75ZM2.625 12a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0ZM7.5 12a.75.75 0 0 1 .75-.75h12a.75.75 0 0 1 0 1.5h-12A.75.75 0 0 1 7.5 12Zm-4.875 5.25a1.125 1.125 0 1 1 2.25 0 1.125 1.125 0 0 1-2.25 0Zm4.875 0a.75.75 0 0 1 .75-.75h12a.75.75 0 0 1 0 1.5h-12a.75.75 0 0 1-.75-.75Z" clipRule="evenodd" />
+                                </svg>
+                            </Link>
+                            <Separator orientation="vertical" className="mx-2" />
+                        </div>
+                        <div className="flex-3">
+                            <h1 className="scroll-m-20 text-3xl font-extrabold tracking-tight text-balance">{project.name}</h1>
+                            <p className="text-muted-foreground text-lg">{project.description}</p>
+                        </div>
+                        <div className="flex-1 flex items-center justify-end ms-5">
+                            <Button variant="secondary" className="bg-yellow-300 hover:bg-yellow-400 text-gray-800 hover:text-gray-900 transition-colors duration-200 me-3">
+                                <Link to={`/project/${project.slug}`} className="flex items-center justify-center w-full">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6 mr-1">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
                                     </svg>
-
-
+                                    Members
                                 </Link>
-                                <Separator orientation="vertical" className="mx-2" />
-                            </div>
-                            <div className="flex-3">
-                                <h1 className="scroll-m-20 text-3xl font-extrabold tracking-tight text-balance">{project.name}</h1>
-                                <p className="text-muted-foreground text-lg">{project.description}</p>
-                            </div>
-                            <div className="flex-1 flex items-center justify-end">
-                                <Button variant="secondary" className="bg-yellow-300 hover:bg-yellow-400 text-gray-800 hover:text-gray-900 transition-colors duration-200">
-                                    <Link to={`/project/${project.slug}/scrum`} className="flex items-center justify-center w-full">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6 mr-1">
-                                            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0 .5 1.5m-.5-1.5h-9.5m0 0-.5 1.5m.75-9 3-3 2.148 2.148A12.061 12.061 0 0 1 16.5 7.605" />
-                                        </svg>
-                                        Scrum Report
-                                    </Link>
-                                </Button>
-                            </div>
+                            </Button>
+                            <Button variant="secondary" className="bg-yellow-300 hover:bg-yellow-400 text-gray-800 hover:text-gray-900 transition-colors duration-200">
+                                <Link to={`/project/${project.slug}/scrum`} className="flex items-center justify-center w-full">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6 mr-1">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 0 0 6 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0 1 18 16.5h-2.25m-7.5 0h7.5m-7.5 0-1 3m8.5-3 1 3m0 0 .5 1.5m-.5-1.5h-9.5m0 0-.5 1.5m.75-9 3-3 2.148 2.148A12.061 12.061 0 0 1 16.5 7.605" />
+                                    </svg>
+                                    Scrum Report
+                                </Link>
+                            </Button>
+                            <Button variant="destructive" className="bg-yellow-300 hover:bg-yellow-400 text-gray-800 hover:text-gray-900 transition-colors duration-200 ms-3">
+                                <Link to={`/project/${project.slug}/settings`} className="flex items-center justify-center w-full">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                    </svg>
+                                </Link>
+                            </Button>
                         </div>
-                    </WindowHeader>
-
-                    <WindowContent>
-                        <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight mb-3">
-                            List of Members
-                        </h3>
-                        <Input
-                            className="bg-white/60 backdrop-blur-md focus-visible:ring-0"
-                            placeholder="Search..."
-                            autoComplete="off"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                        />
-                        <div className="flex flex-row flex-wrap items-start gap-3 text-sm mt-4">
-                            {project.roles.map((role, index) => (
-                                <div key={role.id || index} className="flex items-center gap-1">
-                                    <Checkbox
-                                        id={role.slug}
-                                        className="bg-white/60 backdrop-blur-md"
-                                        checked={selectedRoles.includes(role.name)}
-                                        onCheckedChange={() => {
-                                            setSelectedRoles((prev) =>
-                                                prev.includes(role.name)
-                                                    ? prev.filter((r) => r !== role.name)
-                                                    : [...prev, role.name]
-                                            );
-                                        }}
-                                    />
-                                    <Label htmlFor={role.slug}>{role.name}</Label>
-                                </div>
-                            ))}
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 mt-5">
-                            {isLoadMembers ? (
-                                Array.from({ length: 4 }).map((_, i) => (
-                                    <Skeleton key={i} className="h-60 w-full bg-white/40" />
-                                ))
-                            ) : (
-                                filteredMembers.length === 0 ? (
-                                    <div className="col-span-full text-center text-muted-foreground py-10">No members found.</div>
-                                ) : (
-                                    filteredMembers.map((member, index) => (
-                                        <Card key={member.id || index} className="transition-all duration-100 hover:shadow-xl hover:bg-white/50 hover:border-white/30 bg-white/40 backdrop-blur-md">
-                                            <CardContent className="flex flex-col items-center">
-                                                <Avatar className="w-24 h-24 mb-3">
-                                                    <AvatarImage src={member.photo ? member.photo : userImg} />
-                                                </Avatar>
-                                                <h3 className="text-lg font-semibold text-center">{member.full_name}</h3>
-                                                <p className="text-sm text-muted-foreground">{member.role_name}</p>
-                                                <Button variant="secondary" size="sm" onClick={() => detailMember(member.id)} className="bg-white cursor-pointer mt-3">Detail</Button>
-                                            </CardContent>
-                                        </Card>
-                                    ))
-                                )
-                            )}
-                        </div>
-                    </WindowContent>
-                </WindowLayout>
-            </div>
-
-
-            <Dialog open={openModalMember} onOpenChange={setOpenModalMember}>
-                <DialogContent className="sm:max-w-7xl max-w-full bg-white/80 backdrop-blur-md" aria-describedby={undefined}>
-                    <DialogHeader>
-                        {member ? (
-                            <>
-                                <DialogTitle>{member?.full_name}</DialogTitle>
-                                <DialogDescription>{member?.role_name}</DialogDescription>
-                            </>
-                        ) : (
-                            <>
-                                <DialogTitle className="sr-only">Loading...</DialogTitle>
-                                <Skeleton className="h-6 w-1/4 bg-gray-400" />
-                                <Skeleton className="h-6 w-1/6 bg-gray-300 mt-2" />
-                            </>
-                        )}
-                    </DialogHeader>
-
-                    <div className="overflow-y-auto max-h-[80vh]">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>No.</TableHead>
-                                    <TableHead>Story</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className="text-center">Story Point</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {member && Array.isArray(member.stories) && member.stories.map((story, index) => {
-                                    let status = "";
-                                    let statusColor = "";
-                                    if (project.us_statuses && Array.isArray(project.us_statuses)) {
-                                        project.us_statuses.forEach((us_status) => {
-                                            if (story.status == us_status.id) {
-                                                status = us_status.name;
-                                                statusColor = us_status.color;
-                                            }
-                                        });
-                                    }
-
-                                    let swimlane = "";
-                                    if (project.swimlanes && Array.isArray(project.swimlanes)) {
-                                        project.swimlanes.forEach((swimlaneData) => {
-                                            if (story.swimlane == swimlaneData.id) {
-                                                swimlane = swimlaneData.name;
-                                            }
-                                        });
-                                    }
-
-                                    const pointID = story.points[member.role]
-                                    let sp = "0";
-                                    if (pointID && Array.isArray(project.points)) {
-                                        project.points.forEach((point) => {
-                                            if (point.id == pointID) {
-                                                sp = point.name;
-                                            }
-                                        });
-                                    }
-
-                                    return (
-                                        <TableRow key={story.id || index}>
-                                            <TableCell>{index + 1}</TableCell>
-                                            <TableCell className="text-wrap">
-                                                {swimlane && <b>[{swimlane}] </b>}{story.subject}
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge variant={"secondary"} className="bg-white" style={{ color: statusColor }}>{status}</Badge>
-                                            </TableCell>
-                                            <TableCell className="text-center">{sp}</TableCell>
-                                        </TableRow>
-                                    )
-                                })}
-                                {member && member.stories.length === 0 && (
-                                    <TableRow>
-                                        <TableCell colSpan={4} className="text-center text-muted-foreground py-10">
-                                            No stories found for this member.
-                                        </TableCell>
-                                    </TableRow>
-                                )}
-                                {!member && (
-                                    Array.from({ length: 3 }).map((_, i) => (
-                                        <TableRow key={i}>
-                                            <TableCell>
-                                                <Skeleton className="h-6 w-8 bg-gray-300" />
-                                            </TableCell>
-                                            <TableCell>
-                                                <Skeleton className={`h-6 ${i === 0 ? "w-80" : i === 1 ? "w-72" : "w-96"} bg-gray-300`} />
-                                            </TableCell>
-                                            <TableCell>
-                                                <Skeleton className={`h-6 ${i === 0 ? "w-32" : i === 1 ? "w-20" : "w-40"} bg-gray-300`} />
-                                            </TableCell>
-                                            <TableCell className="flex justify-center">
-                                                <Skeleton className="h-6 w-12 bg-gray-300" />
-                                            </TableCell>
-                                        </TableRow>
-                                    ))
-                                )}
-                            </TableBody>
-                            <TableFooter>
-                                <TableRow>
-                                    <TableHead colSpan={3} className="text-right">Total Story Point</TableHead>
-                                    <TableHead className="text-center">{member?.total_point || "0"}</TableHead>
-                                </TableRow>
-                            </TableFooter>
-                        </Table>
                     </div>
-                </DialogContent>
-            </Dialog>
-        </>
+                </WindowHeader>
+
+                <WindowContent>
+                    <Outlet />
+                </WindowContent>
+            </WindowLayout>
+        </div>
     );
 }
 

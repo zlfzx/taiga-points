@@ -14,7 +14,7 @@ export interface Member {
     todo_stories: number;
     in_progress_stories: number;
     remaining_point: number;
-    completed_point: number
+    // completed_point: number
     total_point: number;
     created_at: string;
 }

@@ -5,7 +5,11 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"taiga-points/internal/contracts"
+	"taiga-points/internal/database"
+	"taiga-points/internal/handlers"
 	"taiga-points/internal/routers"
+	"taiga-points/internal/services"
 
 	"github.com/joho/godotenv"
 )
@@ -19,6 +23,23 @@ func init() {
 }
 
 func main() {
+	baseURL := os.Getenv("TAIGA_BASE_URL")
+
+	db, err := database.Init()
+	if err != nil {
+		slog.Error("Failed to initialize database", "err", err)
+		os.Exit(1)
+	}
+
+	app := contracts.App{
+		BaseURL: baseURL,
+		DB:      db,
+		Services: &contracts.Services{
+			Taiga: services.NewTaigaService(baseURL, db),
+		},
+	}
+
+	handlers.Init(&app)
 	router := routers.LoadRouters(web)
 
 	port := os.Getenv("APP_PORT")

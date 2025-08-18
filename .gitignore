@@ -52,6 +52,10 @@ coverage/
 # Misc
 *.log
 
+# Data
+/data/*
+!data/.gitkeep
+
 # React app in frontend directory
 /frontend/node_modules/
 /frontend/build/

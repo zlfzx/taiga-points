@@ -2,86 +2,26 @@ package handlers
 
 import (
 	"encoding/json"
-	"io"
 	"net/http"
+	"taiga-points/internal/contracts"
 	"taiga-points/internal/models"
-
-	"github.com/go-chi/render"
 )
 
 func GetProjects(w http.ResponseWriter, r *http.Request) {
-
-	// get headers auth
-	auth := r.Header.Get("Authorization")
-	if auth == "" {
-		render.Status(r, http.StatusUnauthorized)
-		render.JSON(w, r, models.HTTPResponse{
-			StatusCode: http.StatusUnauthorized,
-			StatusText: "Unauthorized",
-			Message:    "Missing authorization header",
-		})
-		return
-	}
+	// get auth token from context
+	auth := r.Context().Value(contracts.AuthToken).(string)
 
 	// get query params
 	query := r.URL.Query()
 	memberId := query.Get("member")
 
-	// get projects
-	req, _ := http.NewRequest("GET", TaigaBaseURL+"/projects", nil)
-
-	if memberId != "" {
-		query = req.URL.Query()
-		query.Add("member", memberId)
-		req.URL.RawQuery = query.Encode()
-	}
-
-	req.Header.Set("Authorization", auth)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("x-disable-pagination", "True")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	projects, err := app.Services.Taiga.GetProjects(auth, memberId)
 	if err != nil {
-		render.Status(r, http.StatusInternalServerError)
-		render.JSON(w, r, models.HTTPResponse{
-			StatusCode: http.StatusInternalServerError,
-			StatusText: "Internal Server Error",
-			Message:    err.Error(),
-		})
-		return
-	}
-	defer resp.Body.Close()
-
-	body, _ := io.ReadAll(resp.Body)
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		render.Status(r, resp.StatusCode)
-		var respJSON any
-		if err := json.Unmarshal(body, &respJSON); err != nil {
-			respJSON = string(body)
-		}
-		render.JSON(w, r, models.HTTPResponse{
-			StatusCode: resp.StatusCode,
-			StatusText: http.StatusText(resp.StatusCode),
-			Message:    respJSON,
-		})
+		responseHTTPError(w, r, err)
 		return
 	}
 
-	var projects []models.Project
-	err = json.Unmarshal(body, &projects)
-	if err != nil {
-		render.Status(r, http.StatusInternalServerError)
-		render.JSON(w, r, models.HTTPResponse{
-			StatusCode: http.StatusInternalServerError,
-			StatusText: "Internal Server Error",
-			Message:    err.Error(),
-		})
-		return
-	}
-
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, models.HTTPResponse{
+	responseJSON(w, r, models.HTTPResponse{
 		StatusCode: http.StatusOK,
 		StatusText: "OK",
 		Data:       projects,
@@ -89,17 +29,8 @@ func GetProjects(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetProject(w http.ResponseWriter, r *http.Request) {
-
-	// get headers auth
-	auth := r.Header.Get("Authorization")
-	if auth == "" {
-		responseJSON(w, r, models.HTTPResponse{
-			StatusCode: http.StatusUnauthorized,
-			StatusText: "Unauthorized",
-			Message:    "Missing authorization header",
-		})
-		return
-	}
+	// get auth token from context
+	auth := r.Context().Value(contracts.AuthToken).(string)
 
 	// get query params
 	query := r.URL.Query()
@@ -113,50 +44,37 @@ func GetProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req, _ := http.NewRequest("GET", TaigaBaseURL+"/projects/by_slug", nil)
-
-	query = req.URL.Query()
-	query.Add("slug", projectSlug)
-	req.URL.RawQuery = query.Encode()
-
-	req.Header.Set("Authorization", auth)
-	req.Header.Set("Content-Type", "application/json")
-	// req.Header.Set("x-disable-pagination", "false")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	project, err := app.Services.Taiga.GetProject(auth, projectSlug)
 	if err != nil {
-		responseJSON(w, r, models.HTTPResponse{
-			StatusCode: http.StatusInternalServerError,
-			StatusText: "Internal Server Error",
-			Message:    err.Error(),
-		})
+		responseHTTPError(w, r, err)
 		return
 	}
-	defer resp.Body.Close()
 
-	body, _ := io.ReadAll(resp.Body)
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		var respJSON any
-		if err := json.Unmarshal(body, &respJSON); err != nil {
-			respJSON = string(body)
-		}
+	responseJSON(w, r, models.HTTPResponse{
+		StatusCode: http.StatusOK,
+		StatusText: "OK",
+		Data:       project,
+	})
+}
+
+func SetProjectSettings(w http.ResponseWriter, r *http.Request) {
+	// get auth token from context
+	auth := r.Context().Value(contracts.AuthToken).(string)
+
+	// parse the request body
+	var request models.ProjectSettingRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		responseJSON(w, r, models.HTTPResponse{
-			StatusCode: resp.StatusCode,
-			StatusText: http.StatusText(resp.StatusCode),
-			Message:    respJSON,
+			StatusCode: http.StatusBadRequest,
+			StatusText: "Bad Request",
+			Message:    "Invalid request payload",
 		})
 		return
 	}
 
-	var project models.Project
-	err = json.Unmarshal(body, &project)
+	project, err := app.Services.Taiga.SetProjectSettings(auth, request)
 	if err != nil {
-		responseJSON(w, r, models.HTTPResponse{
-			StatusCode: http.StatusInternalServerError,
-			StatusText: "Internal Server Error",
-			Message:    err.Error(),
-		})
+		responseHTTPError(w, r, err)
 		return
 	}
 

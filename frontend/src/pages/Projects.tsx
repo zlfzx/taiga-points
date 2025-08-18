@@ -9,7 +9,7 @@ import { useState } from "react";
 import { useLogout } from "@/auth/auth";
 
 function Projects() {
-    const { projects } = useLoaderData<{ projects: Project[] }>();
+    const projects = useLoaderData<Project[]>();
     const [user] = useState(() => {
         const userData = localStorage.getItem("user");
         return userData ? JSON.parse(userData) : null;
@@ -19,7 +19,7 @@ function Projects() {
     console.log("Projects:", projects);
 
     return (
-        <div className="container mx-auto p-6">
+        <div className="container mx-auto px-6 py-12">
             <WindowLayout>
                 <WindowHeader>
                     <div className="flex flex-wrap">
@@ -29,7 +29,7 @@ function Projects() {
                             </svg>
                         </div>
                         <div className="flex-3">
-                            <h1 className="scroll-m-20 text-3xl font-extrabold tracking-tight text-balance">{user.full_name || user.username}</h1>
+                            <h1 className="scroll-m-20 text-3xl font-bold tracking-tight text-balance">{user.full_name || user.username}</h1>
                             <p className="text-muted-foreground text-lg">{user.email}</p>
                         </div>
                         <div className="flex-1 flex items-center justify-end">
@@ -46,9 +46,9 @@ function Projects() {
                     <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight mb-3">
                         List of Projects
                     </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-5 mt-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6 mt-5">
                         {projects.map((item, index) => (
-                            <Card key={index} className="justify-between transition-all duration-100 hover:shadow-xl hover:bg-white/50 hover:border-white/30 bg-white/40 backdrop-blur-md">
+                            <Card key={index} className="justify-between transition-all duration-100 hover:shadow-md hover:bg-white/50 hover:border-white/30 bg-white/40 backdrop-blur-md border-transparent shadow-white">
                                 <CardHeader className="flex flex-col items-center justify-center">
                                     <Avatar className="w-24 h-24 rounded mb-3">
                                         <AvatarImage src={item.logo_big_url ? item.logo_big_url : projectImg} />
@@ -59,9 +59,9 @@ function Projects() {
                                     <CardDescription>{item.description}</CardDescription>
                                 </CardHeader>
                                 <CardFooter>
-                                    <Button variant="secondary" className="w-full bg-white">
+                                    <Button variant="secondary" className="w-full bg-white shadow-md hover:bg-white/80 hover:shadow-lg transition-colors duration-200 text-gray-800 hover:text-gray-900">
                                         <Link to={`/project/${item.slug}`} className="w-full">
-                                            Details
+                                            Detail
                                         </Link>
                                     </Button>
                                 </CardFooter>

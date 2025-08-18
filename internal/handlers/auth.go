@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"bytes"
 	"encoding/json"
 	"net/http"
 	"taiga-points/internal/models"
@@ -10,7 +9,6 @@ import (
 )
 
 func Auth(w http.ResponseWriter, r *http.Request) {
-
 	// parse the request body
 	var authReq models.AuthRequest
 	if err := json.NewDecoder(r.Body).Decode(&authReq); err != nil {
@@ -23,40 +21,13 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payload := map[string]string{
-		"type":     "normal",
-		"username": authReq.Username,
-		"password": authReq.Password,
-	}
-	body, _ := json.Marshal(payload)
-
-	resp, err := http.Post(TaigaBaseURL+"/auth", "application/json", bytes.NewBuffer(body))
+	auth, err := app.Services.Taiga.Authenticate(authReq)
 	if err != nil {
-		render.Status(r, http.StatusInternalServerError)
-		render.JSON(w, r, models.HTTPResponse{
-			StatusCode: http.StatusInternalServerError,
-			StatusText: "Internal Server Error",
-			Message:    err.Error(),
-		})
-		return
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		render.Status(r, http.StatusUnauthorized)
-		render.JSON(w, r, models.HTTPResponse{
-			StatusCode: http.StatusUnauthorized,
-			StatusText: "Unauthorized",
-			Message:    "Invalid credentials",
-		})
+		responseHTTPError(w, r, err)
 		return
 	}
 
-	var auth models.Auth
-	json.NewDecoder(resp.Body).Decode(&auth)
-
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, models.HTTPResponse{
+	responseJSON(w, r, models.HTTPResponse{
 		StatusCode: http.StatusOK,
 		StatusText: "OK",
 		Data:       auth,
@@ -64,7 +35,6 @@ func Auth(w http.ResponseWriter, r *http.Request) {
 }
 
 func RefreshAuth(w http.ResponseWriter, r *http.Request) {
-
 	// parse the request body
 	var authReq models.AuthRequest
 	if err := json.NewDecoder(r.Body).Decode(&authReq); err != nil {
@@ -77,39 +47,13 @@ func RefreshAuth(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	payload := map[string]string{
-		"refresh": authReq.Refresh,
-	}
-
-	body, _ := json.Marshal(payload)
-	resp, err := http.Post(TaigaBaseURL+"/auth/refresh", "application/json", bytes.NewBuffer(body))
+	auth, err := app.Services.Taiga.RefreshAuth(authReq)
 	if err != nil {
-		render.Status(r, http.StatusInternalServerError)
-		render.JSON(w, r, models.HTTPResponse{
-			StatusCode: http.StatusInternalServerError,
-			StatusText: "Internal Server Error",
-			Message:    err.Error(),
-		})
-		return
-	}
-	defer resp.Body.Close()
-
-	// check if the response is valid
-	if resp.StatusCode != http.StatusOK {
-		render.Status(r, http.StatusUnauthorized)
-		render.JSON(w, r, models.HTTPResponse{
-			StatusCode: http.StatusUnauthorized,
-			StatusText: "Unauthorized",
-			Message:    "Invalid refresh token",
-		})
+		responseHTTPError(w, r, err)
 		return
 	}
 
-	var auth models.Auth
-	json.NewDecoder(resp.Body).Decode(&auth)
-
-	render.Status(r, http.StatusOK)
-	render.JSON(w, r, models.HTTPResponse{
+	responseJSON(w, r, models.HTTPResponse{
 		StatusCode: http.StatusOK,
 		StatusText: "OK",
 		Data:       auth,

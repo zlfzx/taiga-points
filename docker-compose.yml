@@ -8,6 +8,8 @@ services:
     container_name: taiga-points
     ports:
       - "${APP_PORT}:${APP_PORT}"
+    volumes:
+      - ./data:/app/data
     env_file:
       - .env
     environment:

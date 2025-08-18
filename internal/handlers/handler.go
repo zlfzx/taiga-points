@@ -1,84 +1,75 @@
 package handlers
 
 import (
-	"encoding/json"
-	"io"
+	"context"
+	"errors"
 	"net/http"
+	"taiga-points/internal/clients"
+	"taiga-points/internal/contracts"
 	"taiga-points/internal/models"
 
 	"github.com/go-chi/render"
 )
 
-var TaigaBaseURL string
+var app *contracts.App
 
-// func getAuthToken(r *http.Request) string {
-// 	auth := r.Header.Get("Authorization")
-// 	if auth == "" {
-// 		return ""
-// 	}
-// 	return auth
-// }
+func Init(a *contracts.App) {
+	app = a
+}
+
+func getHeaderAuth(r *http.Request) string {
+	auth := r.Header.Get("Authorization")
+	if auth == "" {
+		return ""
+	}
+
+	// Check if the auth header starts with "Bearer "
+	if len(auth) > 7 && auth[:7] == "Bearer " {
+		return auth[7:] // Return the token part
+	}
+
+	// If it doesn't start with "Bearer ", return the whole header
+	return auth
+}
 
 func responseJSON(w http.ResponseWriter, r *http.Request, response models.HTTPResponse) {
 	render.Status(r, response.StatusCode)
 	render.JSON(w, r, response)
 }
 
-func GetUserStories(auth, projectId string) (userStories []models.UserStory, err error) {
-
-	req, _ := http.NewRequest("GET", TaigaBaseURL+"/userstories", nil)
-
-	query := req.URL.Query()
-	query.Add("project", projectId)
-	// query.Add("status", "88,89,90,114")
-	query.Add("status__is_archived", "false")
-	req.URL.RawQuery = query.Encode()
-
-	req.Header.Set("Authorization", auth)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("x-disable-pagination", "false")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	body, _ := io.ReadAll(resp.Body)
-	err = json.Unmarshal(body, &userStories)
-	if err != nil {
-		return nil, err
+func responseHTTPError(w http.ResponseWriter, r *http.Request, err error) {
+	var httpErr *clients.HTTPError
+	if errors.As(err, &httpErr) {
+		responseJSON(w, r, models.HTTPResponse{
+			StatusCode: httpErr.StatusCode,
+			StatusText: http.StatusText(httpErr.StatusCode),
+			Message:    httpErr.Body,
+		})
+		return
 	}
 
-	return
+	responseJSON(w, r, models.HTTPResponse{
+		StatusCode: http.StatusInternalServerError,
+		StatusText: "Internal Server Error",
+		Message:    err.Error(),
+	})
 }
 
-func GetPoints(auth, projectId string) (points []models.Point, err error) {
-	// auth := GetAuth()
+func AuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authToken := getHeaderAuth(r)
+		if authToken == "" {
+			responseJSON(w, r, models.HTTPResponse{
+				StatusCode: http.StatusUnauthorized,
+				StatusText: "Unauthorized",
+				Message:    "Missing authorization header",
+			})
+			return
+		}
 
-	req, _ := http.NewRequest("GET", TaigaBaseURL+"/points", nil)
+		// Set the auth token in the request context
+		ctx := context.WithValue(r.Context(), contracts.AuthToken, authToken)
 
-	query := req.URL.Query()
-	query.Add("project", projectId)
-	req.URL.RawQuery = query.Encode()
-
-	req.Header.Set("Authorization", auth)
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("x-disable-pagination", "false")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	body, _ := io.ReadAll(resp.Body)
-	err = json.Unmarshal(body, &points)
-	if err != nil {
-		return nil, err
-	}
-
-	return
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }

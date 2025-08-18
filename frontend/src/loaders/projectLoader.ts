@@ -2,7 +2,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import type { Project } from "../models/project";
 import api from "@/lib/axios";
 
-export async function projectsLoader(): Promise<{ projects: Project[] }> {
+export async function projectsLoader(): Promise<Project[]> {
   // get projects from the backend
   let url = '/api/projects';
 
@@ -15,11 +15,11 @@ export async function projectsLoader(): Promise<{ projects: Project[] }> {
   const response = await api.get<{ data: Project[] }>(url);
   const projects = response.data.data;
 
-  return { projects };
+  return projects;
 }
 
 
-export async function projectLoader(args: LoaderFunctionArgs): Promise<{ project: Project }> {
+export async function projectLoader(args: LoaderFunctionArgs): Promise<Project> {
     const params = args.params as { slug: string };
 
     // get project from the backend
@@ -32,9 +32,9 @@ export async function projectLoader(args: LoaderFunctionArgs): Promise<{ project
         throw new Error("Failed to fetch project");
     });
 
-    const project = responseProject.data.data;
+    console.log("Project loaded:", responseProject.data.data);
 
-    return { project };
+    return responseProject.data.data;
 }
 
 // export { projectsLoader, projectLoader };
