@@ -10,8 +10,6 @@ services:
       - "${APP_PORT}:${APP_PORT}"
     volumes:
       - ./data:/app/data
-    env_file:
-      - .env
     environment:
       - APP_PORT=${APP_PORT}
       - TAIGA_BASE_URL=${TAIGA_BASE_URL}
