@@ -26,6 +26,6 @@ deploy to production:
     - sudo chown gitlab-runner:gitlab-runner $PRODUCTION_DIR -R
     - sudo git branch
     - sudo git status
-    - docker-compose up -d --build
-    - docker image prune -f -a
-    - docker ps
+    - sudo docker-compose up -d --build
+    - sudo docker image prune -f -a
+    - sudo docker ps
