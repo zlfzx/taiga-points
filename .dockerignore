@@ -26,8 +26,8 @@ Dockerfile*
 .dockerignore
 
 # Environment files
-# .env
-# .env.*
+.env
+.env.*
 
 # Misc
 *.swp
