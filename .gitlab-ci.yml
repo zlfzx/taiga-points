@@ -15,9 +15,8 @@ deploy to production:
     - taiga
     - outline
     - betacoreapi
-  before_script:
-    - cd $PRODUCTION_DIR
   script:
+    - sudo cd $PRODUCTION_DIR
     - pwd
     - whoami
     - sudo su
