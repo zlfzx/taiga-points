@@ -1,3 +1,7 @@
+variables:
+  APP_PORT: 9001
+  TAIGA_BASE_URL: http://taiga.fast-8.com:9000
+
 stages:
   - Deploy Production
 
@@ -13,6 +17,8 @@ deploy to production:
     - betacoreapi
   before_script:
     - sudo cd $PRODUCTION_DIR
+    - export APP_PORT=$APP_PORT
+    - export TAIGA_BASE_URL=$TAIGA_BASE_URL
   script:
     - whoami
     - sudo git config --global --add safe.directory $PRODUCTION_DIR
