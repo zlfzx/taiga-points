@@ -25,6 +25,8 @@ func init() {
 func main() {
 	baseURL := os.Getenv("TAIGA_BASE_URL")
 
+	fmt.Println(baseURL)
+
 	db, err := database.Init()
 	if err != nil {
 		slog.Error("Failed to initialize database", "err", err)
