@@ -10,7 +10,7 @@ services:
       - ./data:/app/data
     env_file:
       - .env
-    environment:
-      - APP_PORT=${APP_PORT}
-      - TAIGA_BASE_URL=${TAIGA_BASE_URL}
+    # environment:
+    #   - APP_PORT=${APP_PORT}
+    #   - TAIGA_BASE_URL=${TAIGA_BASE_URL}
     restart: unless-stopped
