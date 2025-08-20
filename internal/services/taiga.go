@@ -243,7 +243,10 @@ func (s *TaigaService) GetMember(authToken, memberID string) (models.Membership,
 
 	// get user stories
 	go func() {
-		data, err := s.GetUserStories(authToken, projectId)
+		userStoryParams := models.UserStoryParams{
+			ProjectID: projectId,
+		}
+		data, err := s.GetUserStories(authToken, userStoryParams)
 		userStoriesCh <- result[[]models.UserStory]{Data: data, Err: err}
 	}()
 
@@ -352,8 +355,8 @@ func (s *TaigaService) GetMember(authToken, memberID string) (models.Membership,
 	return member, nil
 }
 
-func (s *TaigaService) GetUserStories(authToken, projectID string) ([]models.UserStory, error) {
-	return s.client.GetUserStories(authToken, projectID)
+func (s *TaigaService) GetUserStories(authToken string, params models.UserStoryParams) ([]models.UserStory, error) {
+	return s.client.GetUserStories(authToken, params)
 }
 
 func (s *TaigaService) GetPoints(authToken, projectID string) ([]models.Point, error) {

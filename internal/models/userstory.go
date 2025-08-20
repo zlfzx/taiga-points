@@ -45,3 +45,8 @@ type StatusExtraInfo struct {
 // 	Swimlane  int    `json:"swimlane"`
 // 	Point     int    `json:"point"`
 // }
+
+type UserStoryParams struct {
+	ProjectID   string
+	MilestoneID string
+}

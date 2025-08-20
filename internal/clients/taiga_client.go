@@ -147,13 +147,21 @@ func (c *TaigaClient) GetMemberhip(authToken, memberID string) (models.Membershi
 	return member, nil
 }
 
-func (c *TaigaClient) GetUserStories(authToken, projectID string) ([]models.UserStory, error) {
+func (c *TaigaClient) GetUserStories(authToken string, params models.UserStoryParams) ([]models.UserStory, error) {
 
 	headers := getDefaultHeaders(authToken)
 
 	query := map[string]string{
-		"project":             projectID,
+		// "project":             params.ProjectID,
 		"status__is_archived": "false",
+	}
+
+	if params.ProjectID != "" {
+		query["project"] = params.ProjectID
+	}
+
+	if params.MilestoneID != "" {
+		query["milestone"] = params.MilestoneID
 	}
 
 	body, err := c.httpClient.Get(c.baseURL+"/userstories", headers, query)
