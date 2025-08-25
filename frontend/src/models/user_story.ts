@@ -7,6 +7,7 @@ export interface UserStory {
     subject: string;
     status: number;
     status_extra_info: StatusExtraInfo;
+    tags: string[][];
     swimlane: number;
     points: { [key: string]: number };
     point: number;

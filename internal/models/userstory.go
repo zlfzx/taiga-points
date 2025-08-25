@@ -21,6 +21,7 @@ type UserStory struct {
 	Swimlane         int              `json:"swimlane"`
 	Points           map[string]int   `json:"points"`
 	Point            float64          `json:"point"`
+	TotalPoints      float64          `json:"total_points"`
 	IsClosed         bool             `json:"is_closed"`
 	AssignedUsers    []int            `json:"assigned_users"`
 	Milestone        int              `json:"milestone"`
@@ -28,6 +29,7 @@ type UserStory struct {
 	MilestoneSlug    string           `json:"milestone_slug"`
 	URL              string           `json:"url"`
 	ProjectExtraInfo ProjectExtraInfo `json:"project_extra_info"`
+	Tags             [][]string       `json:"tags"`
 }
 
 type StatusExtraInfo struct {

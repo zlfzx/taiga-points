@@ -9,6 +9,9 @@ export interface Milestone {
     closed_points: number;
     total_points: number;
     user_stories: UserStory[];
+    count_swimlanes: MilestoneCountData[];
+    count_tags: MilestoneCountData[];
+    count_statuses: MilestoneCountData[];
     // ref: number;
     // project_id: number;
     // subject: string;
@@ -18,4 +21,10 @@ export interface Milestone {
     // points: { [key: string]: number };
     // is_closed: boolean;
     // assigned_users: number[];
+}
+
+export interface MilestoneCountData {
+    name: string;
+    user_story: number;
+    total_points: number;
 }

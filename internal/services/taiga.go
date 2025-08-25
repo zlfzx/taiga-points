@@ -328,9 +328,6 @@ func (s *TaigaService) GetMember(authToken, memberID string) (models.Membership,
 			}
 		}
 
-		// set user story url
-		userStory.URL = s.baseURL + "/project/" + userStory.ProjectExtraInfo.Slug + "/us/" + strconv.Itoa(userStory.Ref)
-
 		// append user story to member's stories
 		member.Stories = append(member.Stories, userStory)
 	}
@@ -356,7 +353,17 @@ func (s *TaigaService) GetMember(authToken, memberID string) (models.Membership,
 }
 
 func (s *TaigaService) GetUserStories(authToken string, params models.UserStoryParams) ([]models.UserStory, error) {
-	return s.client.GetUserStories(authToken, params)
+	userStories, err := s.client.GetUserStories(authToken, params)
+	if err != nil {
+		return nil, err
+	}
+
+	// set user story url
+	for i := range userStories {
+		userStories[i].URL = s.baseURL + "/project/" + userStories[i].ProjectExtraInfo.Slug + "/us/" + strconv.Itoa(userStories[i].Ref)
+	}
+
+	return userStories, nil
 }
 
 func (s *TaigaService) GetPoints(authToken, projectID string) ([]models.Point, error) {
@@ -368,5 +375,97 @@ func (s *TaigaService) GetMilestones(authToken, projectID string) ([]models.Mile
 }
 
 func (s *TaigaService) GetMilestone(authToken, milestoneID string) (models.Milestone, error) {
-	return s.client.GetMilestone(authToken, milestoneID)
+	milestone, err := s.client.GetMilestone(authToken, milestoneID)
+	if err != nil {
+		return models.Milestone{}, err
+	}
+
+	project, err := s.GetProject(authToken, milestone.ProjectExtraInfo.Slug)
+	if err != nil {
+		return models.Milestone{}, err
+	}
+
+	userStories, err := s.GetUserStories(authToken, models.UserStoryParams{
+		ProjectID:   strconv.Itoa(milestone.Project),
+		MilestoneID: milestoneID,
+	})
+	if err != nil {
+		return models.Milestone{}, err
+	}
+
+	// init count data
+	countSwimlanes := make([]models.MilestoneCountData, 0)
+	countTags := make([]models.MilestoneCountData, 0)
+
+	countStatuses := make([]models.MilestoneCountData, 0)
+	for _, status := range project.USStatuses {
+		countStatuses = append(countStatuses, models.MilestoneCountData{
+			Name:        status.Name,
+			UserStory:   0,
+			TotalPoints: 0,
+		})
+	}
+
+	for _, us := range userStories {
+		milestone.UserStories = append(milestone.UserStories, models.MilestoneUserStory{
+			ID:      us.ID,
+			Ref:     us.Ref,
+			Subject: us.Subject,
+			Status:  us.Status,
+		})
+
+		// count swimlanes
+		swimlaneName := ""
+		for _, swimlane := range project.Swimlanes {
+			if us.Swimlane == swimlane.ID {
+				swimlaneName = swimlane.Name
+				break
+			}
+		}
+		index := slices.IndexFunc(countSwimlanes, func(c models.MilestoneCountData) bool {
+			return c.Name == swimlaneName
+		})
+		if index != -1 {
+			countSwimlanes[index].UserStory++
+			countSwimlanes[index].TotalPoints += us.TotalPoints
+		} else {
+			countSwimlanes = append(countSwimlanes, models.MilestoneCountData{
+				Name:        swimlaneName,
+				UserStory:   1,
+				TotalPoints: us.TotalPoints,
+			})
+		}
+
+		// count tags
+		for _, tag := range us.Tags {
+			index := slices.IndexFunc(countTags, func(c models.MilestoneCountData) bool {
+				return c.Name == tag[0]
+			})
+			if index != -1 {
+				countTags[index].UserStory++
+				countTags[index].TotalPoints += us.TotalPoints
+			} else {
+				countTags = append(countTags, models.MilestoneCountData{
+					Name:        tag[0],
+					UserStory:   1,
+					TotalPoints: us.TotalPoints,
+				})
+			}
+		}
+
+		// count statuses
+		for i, status := range project.USStatuses {
+			if us.Status == status.ID {
+				countStatuses[i].UserStory++
+				countStatuses[i].TotalPoints += us.TotalPoints
+				break
+			}
+		}
+	}
+
+	milestone.CountSwimlanes = countSwimlanes
+	milestone.CountTags = countTags
+	milestone.CountStatuses = countStatuses
+
+	return milestone, nil
 }

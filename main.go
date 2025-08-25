@@ -2,7 +2,6 @@ package main
 
 import (
 	"embed"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -25,8 +24,6 @@ func init() {
 
 func main() {
 	baseURL := os.Getenv("TAIGA_BASE_URL")
-
-	fmt.Println(baseURL)
 
 	db, err := database.Init()
 	if err != nil {

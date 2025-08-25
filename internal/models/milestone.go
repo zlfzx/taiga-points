@@ -19,6 +19,15 @@ type Milestone struct {
 	TotalPoints      float64              `json:"total_points"`
 	ProjectExtraInfo ProjectExtraInfo     `json:"project_extra_info"`
 	UserStories      []MilestoneUserStory `json:"user_stories"`
+	CountSwimlanes   []MilestoneCountData `json:"count_swimlanes"`
+	CountTags        []MilestoneCountData `json:"count_tags"`
+	CountStatuses    []MilestoneCountData `json:"count_statuses"`
+}
+
+type MilestoneCountData struct {
+	Name        string  `json:"name"`
+	UserStory   int     `json:"user_story"`
+	TotalPoints float64 `json:"total_points"`
 }
 
 type MilestoneUserStory struct {

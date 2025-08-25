@@ -44,6 +44,8 @@ func LoadRouters(embed embed.FS) (r *chi.Mux) {
 
 			r.Get("/milestones", handlers.GetMilestones)
 			r.Get("/milestone/{milestoneID:[0-9]+}", handlers.GetMilestone)
+
+			r.Get("/user-stories", handlers.GetUserStories)
 		})
 	})
 
