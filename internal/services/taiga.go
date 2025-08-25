@@ -244,7 +244,8 @@ func (s *TaigaService) GetMember(authToken, memberID string) (models.Membership,
 	// get user stories
 	go func() {
 		userStoryParams := models.UserStoryParams{
-			ProjectID: projectId,
+			ProjectID:  projectId,
+			IsArchived: "false",
 		}
 		data, err := s.GetUserStories(authToken, userStoryParams)
 		userStoriesCh <- result[[]models.UserStory]{Data: data, Err: err}
@@ -388,7 +389,7 @@ func (s *TaigaService) GetMilestone(authToken, milestoneID string) (models.Miles
 	userStories, err := s.GetUserStories(authToken, models.UserStoryParams{
 		ProjectID:   strconv.Itoa(milestone.Project),
 		MilestoneID: milestoneID,
-		IsArchived:  true,
+		IsArchived:  "true",
 	})
 	if err != nil {
 		return models.Milestone{}, err

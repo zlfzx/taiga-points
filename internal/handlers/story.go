@@ -32,8 +32,13 @@ func GetUserStories(w http.ResponseWriter, r *http.Request) {
 	}
 
 	isArchived := query.Get("is_archived")
-	if isArchived == "true" {
-		params.IsArchived = true
+	// if isArchived == "true" {
+	// 	params.IsArchived = true
+	// } else if isArchived == "false" {
+	// 	params.IsArchived = false
+	// }
+	if isArchived != "" {
+		params.IsArchived = isArchived
 	}
 
 	// get userStories

@@ -3,6 +3,7 @@ package clients
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"taiga-points/internal/models"
 )
 
@@ -153,7 +154,7 @@ func (c *TaigaClient) GetUserStories(authToken string, params models.UserStoryPa
 
 	query := map[string]string{
 		// "project":             params.ProjectID,
-		"status__is_archived": "false",
+		// "status__is_archived": "false",
 	}
 
 	if params.ProjectID != "" {
@@ -164,9 +165,11 @@ func (c *TaigaClient) GetUserStories(authToken string, params models.UserStoryPa
 		query["milestone"] = params.MilestoneID
 	}
 
-	if params.IsArchived {
-		query["status__is_archived"] = "true"
+	if params.IsArchived != "" {
+		query["status__is_archived"] = params.IsArchived
 	}
+
+	fmt.Println("query", query)
 
 	body, err := c.httpClient.Get(c.baseURL+"/userstories", headers, query)
 	if err != nil {

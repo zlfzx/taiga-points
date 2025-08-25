@@ -25,7 +25,7 @@ function ProjectScrumDetail() {
         revalidateOnReconnect: false,
     });
 
-    const { data: userStories } = useSWR<UserStory[]>(`/api/user-stories?project=${project?.id}&milestone_id=${milestoneId}&is_archived=true`, {
+    const { data: userStories } = useSWR<UserStory[]>(`/api/user-stories?project=${project?.id}&milestone_id=${milestoneId}`, {
         fetcher: (url: string) => api.get(url).then(res => res.data.data),
     });
 
@@ -242,7 +242,7 @@ function ProjectScrumDetail() {
                     </CardContent>
                 </Card>
             </div>
-            
+
             <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-5 mt-5">
                 <Card className="transition-all duration-100 hover:shadow-md hover:bg-white/60 bg-white/40 backdrop-blur-md border-transparent shadow-white">
                     <CardContent>
