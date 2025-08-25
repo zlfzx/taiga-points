@@ -31,6 +31,11 @@ func GetUserStories(w http.ResponseWriter, r *http.Request) {
 		params.MilestoneID = milestoneID
 	}
 
+	isArchived := query.Get("is_archived")
+	if isArchived == "true" {
+		params.IsArchived = true
+	}
+
 	// get userStories
 	userStories, err := app.Services.Taiga.GetUserStories(auth, params)
 	if err != nil {

@@ -164,6 +164,10 @@ func (c *TaigaClient) GetUserStories(authToken string, params models.UserStoryPa
 		query["milestone"] = params.MilestoneID
 	}
 
+	if params.IsArchived {
+		query["status__is_archived"] = "true"
+	}
+
 	body, err := c.httpClient.Get(c.baseURL+"/userstories", headers, query)
 	if err != nil {
 		return nil, err

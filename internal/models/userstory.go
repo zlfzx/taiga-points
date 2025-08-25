@@ -51,4 +51,5 @@ type StatusExtraInfo struct {
 type UserStoryParams struct {
 	ProjectID   string
 	MilestoneID string
+	IsArchived  bool
 }

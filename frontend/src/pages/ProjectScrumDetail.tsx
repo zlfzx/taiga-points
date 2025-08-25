@@ -25,7 +25,7 @@ function ProjectScrumDetail() {
         revalidateOnReconnect: false,
     });
 
-    const { data: userStories } = useSWR<UserStory[]>(`/api/user-stories?project=${project?.id}&milestone_id=${milestoneId}`, {
+    const { data: userStories } = useSWR<UserStory[]>(`/api/user-stories?project=${project?.id}&milestone_id=${milestoneId}&is_archived=true`, {
         fetcher: (url: string) => api.get(url).then(res => res.data.data),
     });
 

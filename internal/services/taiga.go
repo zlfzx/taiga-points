@@ -388,6 +388,7 @@ func (s *TaigaService) GetMilestone(authToken, milestoneID string) (models.Miles
 	userStories, err := s.GetUserStories(authToken, models.UserStoryParams{
 		ProjectID:   strconv.Itoa(milestone.Project),
 		MilestoneID: milestoneID,
+		IsArchived:  true,
 	})
 	if err != nil {
 		return models.Milestone{}, err
