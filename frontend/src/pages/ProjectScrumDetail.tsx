@@ -242,6 +242,7 @@ function ProjectScrumDetail() {
                     </CardContent>
                 </Card>
             </div>
+            
             <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-5 mt-5">
                 <Card className="transition-all duration-100 hover:shadow-md hover:bg-white/60 bg-white/40 backdrop-blur-md border-transparent shadow-white">
                     <CardContent>
@@ -319,59 +320,65 @@ function ProjectScrumDetail() {
                 </Card>
             </div>
 
-            {/* <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-5 mt-5"> */}
-            <Card className="transition-all duration-100 hover:shadow-md hover:bg-white/60 bg-white/40 backdrop-blur-md border-transparent shadow-white mt-5">
-                <CardContent className="flexx flex-colx items-startx">
-                    <h4 className="font-semibold">User Stories</h4>
-                    <Table>
-                        {/* <TableCaption>A list of your recent invoices.</TableCaption> */}
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>No.</TableHead>
-                                <TableHead>User Story</TableHead>
-                                <TableHead>Status</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {userStories && userStories.map((story, index) => {
+            <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-1 gap-5 mt-5">
+                <Card className="transition-all duration-100 hover:shadow-md hover:bg-white/60 bg-white/40 backdrop-blur-md border-transparent shadow-white">
+                    <CardContent className="flexx flex-colx items-startx">
+                        <h4 className="font-semibold">User Stories</h4>
+                        <Table>
+                            {/* <TableCaption>A list of your recent invoices.</TableCaption> */}
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>No.</TableHead>
+                                    <TableHead>User Story</TableHead>
+                                    <TableHead>Closed Story</TableHead>
+                                    <TableHead>Status</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {userStories && userStories.map((story, index) => {
 
-                                let swimlane = "";
-                                if (project && project.swimlanes && Array.isArray(project.swimlanes)) {
-                                    project.swimlanes.forEach((swimlaneData) => {
-                                        if (story.swimlane == swimlaneData.id) {
-                                            swimlane = swimlaneData.name;
-                                        }
-                                    });
-                                }
+                                    let swimlane = "";
+                                    if (project && project.swimlanes && Array.isArray(project.swimlanes)) {
+                                        project.swimlanes.forEach((swimlaneData) => {
+                                            if (story.swimlane == swimlaneData.id) {
+                                                swimlane = swimlaneData.name;
+                                            }
+                                        });
+                                    }
 
-                                return (
-                                    <TableRow key={story.id}>
-                                        <TableCell>{index + 1}</TableCell>
-                                        <TableCell>
-                                            {swimlane && <><b className="text-gray-700">{swimlane}</b></>}
-                                            <br />
-                                            <a href={story.url} target="_blank">{story.subject}</a>
-                                            <div className="mt-1">
-                                                {story.tags.map((tag, tagIndex) => (
-                                                    <Badge key={tagIndex} className="text-xs text-white mr-1.5" style={{ backgroundColor: tag[1] }}>
-                                                        {tag[0]}
-                                                    </Badge>
-                                                ))}
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge variant={"outline"} className="bg-white" style={{ color: story.status_extra_info.color }}>
-                                                {story.status_extra_info.name}
-                                            </Badge>
-                                        </TableCell>
-                                    </TableRow>
-                                )
-                            })}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
-            {/* </div> */}
+                                    return (
+                                        <TableRow key={story.id}>
+                                            <TableCell>{index + 1}</TableCell>
+                                            <TableCell>
+                                                {swimlane && <><b className="text-gray-700">{swimlane}</b></>}
+                                                <br />
+                                                <a href={story.url} target="_blank">{story.subject}</a>
+                                                <div className="mt-1">
+                                                    {story.tags.map((tag, tagIndex) => (
+                                                        <Badge key={tagIndex} className="text-xs text-white mr-1.5" style={{ backgroundColor: tag[1] }}>
+                                                            {tag[0]}
+                                                        </Badge>
+                                                    ))}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge className={story.is_closed ? 'bg-rose-300' : 'bg-green-300'}>
+                                                    {story.is_closed ? 'Closed' : 'Open'}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant={"outline"} className="bg-white" style={{ color: story.status_extra_info.color }}>
+                                                    {story.status_extra_info.name}
+                                                </Badge>
+                                            </TableCell>
+                                        </TableRow>
+                                    )
+                                })}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            </div>
 
         </div>
     );
