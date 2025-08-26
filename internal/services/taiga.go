@@ -24,6 +24,8 @@ type TaigaService struct {
 	client  *clients.TaigaClient
 }
 
+var Projects = map[string]models.Project{}
+
 func NewTaigaService(baseURL string, db *sql.DB) *TaigaService {
 	return &TaigaService{
 		baseURL: baseURL,
@@ -50,6 +52,19 @@ func (s *TaigaService) GetProject(authToken, slug string) (models.Project, error
 		return models.Project{}, err
 	}
 
+	return s.setProject(project)
+}
+
+func (s *TaigaService) GetProjectByID(authToken, projectID string) (models.Project, error) {
+	project, err := s.client.GetProjectByID(authToken, projectID)
+	if err != nil {
+		return models.Project{}, err
+	}
+
+	return s.setProject(project)
+}
+
+func (s *TaigaService) setProject(project models.Project) (models.Project, error) {
 	projectSetting, err := s.GetProjectSetting(strconv.Itoa(project.ID))
 	if err != nil && err != sql.ErrNoRows {
 		return models.Project{}, err
@@ -60,6 +75,10 @@ func (s *TaigaService) GetProject(authToken, slug string) (models.Project, error
 		project.RolePoints = projectSetting.RolePoints
 		project.StatusPoints = projectSetting.StatusPoints
 	}
+
+	// cache project
+	projectID := strconv.Itoa(project.ID)
+	Projects[projectID] = project
 
 	return project, nil
 }
@@ -354,14 +373,35 @@ func (s *TaigaService) GetMember(authToken, memberID string) (models.Membership,
 }
 
 func (s *TaigaService) GetUserStories(authToken string, params models.UserStoryParams) ([]models.UserStory, error) {
+
+	// get project from cache or fetch from API
+	project, exists := Projects[params.ProjectID]
+	if !exists {
+		var err error
+		project, err = s.GetProjectByID(authToken, params.ProjectID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	userStories, err := s.client.GetUserStories(authToken, params)
 	if err != nil {
 		return nil, err
 	}
 
-	// set user story url
+	// set user story url and status order
 	for i := range userStories {
+		// set user story url
 		userStories[i].URL = s.baseURL + "/project/" + userStories[i].ProjectExtraInfo.Slug + "/us/" + strconv.Itoa(userStories[i].Ref)
+
+		// set status order
+		for _, status := range project.USStatuses {
+			if userStories[i].Status == status.ID {
+				userStories[i].StatusExtraInfo.ID = status.ID
+				userStories[i].StatusExtraInfo.Order = status.Order
+				break
+			}
+		}
 	}
 
 	return userStories, nil
@@ -381,15 +421,19 @@ func (s *TaigaService) GetMilestone(authToken, milestoneID string) (models.Miles
 		return models.Milestone{}, err
 	}
 
-	project, err := s.GetProject(authToken, milestone.ProjectExtraInfo.Slug)
-	if err != nil {
-		return models.Milestone{}, err
+	project, exists := Projects[strconv.Itoa(milestone.ProjectExtraInfo.ID)]
+	if !exists {
+		var err error
+		project, err = s.GetProject(authToken, milestone.ProjectExtraInfo.Slug)
+		if err != nil {
+			return models.Milestone{}, err
+		}
 	}
 
 	userStories, err := s.GetUserStories(authToken, models.UserStoryParams{
 		ProjectID:   strconv.Itoa(milestone.Project),
 		MilestoneID: milestoneID,
-		IsArchived:  "true",
+		// IsArchived:  "true",
 	})
 	if err != nil {
 		return models.Milestone{}, err

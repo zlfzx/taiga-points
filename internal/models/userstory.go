@@ -33,7 +33,9 @@ type UserStory struct {
 }
 
 type StatusExtraInfo struct {
+	ID       int    `json:"id"`
 	Name     string `json:"name"`
+	Order    int    `json:"order"`
 	Color    string `json:"color"`
 	IsClosed bool   `json:"is_closed"`
 }

@@ -3,7 +3,7 @@ import { ChartContainer, ChartLegend, ChartTooltip, ChartTooltipContent, type Ch
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from "@/components/ui/table";
 import api from "@/lib/axios";
 import type { Project } from "@/models/project";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useParams, useRouteLoaderData } from "react-router";
 import { YAxis, XAxis, Bar, LabelList, BarChart, PieChart, Pie, Sector, CartesianGrid, Line, LineChart } from "recharts";
 import useSWR from "swr";
@@ -11,6 +11,16 @@ import type { UserStory } from "@/models/user_story";
 import { Badge } from "@/components/ui/badge";
 import type { PieSectorDataItem } from "recharts/types/polar/Pie";
 import type { Milestone } from "@/models/milestone";
+
+type SortConfig = {
+    key: string
+    direction: "asc" | "desc"
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const getValueByPath = (obj: any, path: string) => {
+    return path.split(".").reduce((acc, part) => acc?.[part], obj)
+}
 
 function ProjectScrumDetail() {
 
@@ -25,9 +35,40 @@ function ProjectScrumDetail() {
         revalidateOnReconnect: false,
     });
 
-    const { data: userStories } = useSWR<UserStory[]>(`/api/user-stories?project=${project?.id}&milestone_id=${milestoneId}`, {
+    const { data: userStoriesData } = useSWR<UserStory[]>(`/api/user-stories?project=${project?.id}&milestone_id=${milestoneId}`, {
         fetcher: (url: string) => api.get(url).then(res => res.data.data),
     });
+
+    const [sortConfig, setSortConfig] = useState<SortConfig | null>(null)
+    const userStories = useMemo(() => {
+        if (!userStoriesData) return [];
+        if (!sortConfig) return userStoriesData
+
+        return [...userStoriesData].sort((a, b) => {
+            const aValue = getValueByPath(a, sortConfig.key)
+            const bValue = getValueByPath(b, sortConfig.key)
+
+            if (typeof aValue === "string" && typeof bValue === "string") {
+                return sortConfig.direction === "asc"
+                    ? aValue.localeCompare(bValue)
+                    : bValue.localeCompare(aValue)
+            }
+            if (typeof aValue === "number" && typeof bValue === "number") {
+                return sortConfig.direction === "asc"
+                    ? aValue - bValue
+                    : bValue - aValue
+            }
+            return 0
+        })
+    }, [userStoriesData, sortConfig]);
+
+    const sortUserStories = (key: string) => {
+        let direction: "asc" | "desc" = "asc"
+        if (sortConfig && sortConfig.key === key && sortConfig.direction === "asc") {
+            direction = "desc"
+        }
+        setSortConfig({ key, direction })
+    }
 
     if (error) return <p>Failed to load milestone details.</p>;
     if (isLoading) return <p>Loading milestone details...</p>;
@@ -101,13 +142,14 @@ function ProjectScrumDetail() {
     const statusChartConfig = {
         user_story: {
             label: "User Story",
-            color: "var(--chart-1)",
+            color: "#a78bfa",
         },
         total_points: {
             label: "Total Points",
             color: "var(--chart-2)",
         },
     } satisfies ChartConfig
+
 
     return (
         <div>
@@ -219,6 +261,7 @@ function ProjectScrumDetail() {
                                     tickLine={false}
                                     tickMargin={5}
                                     axisLine={false}
+                                    interval={0}
                                     tickFormatter={(value) => value}
                                     width={Math.max(...tagsChartData.map(d => d.tag.length)) * 7}
                                 />
@@ -325,13 +368,17 @@ function ProjectScrumDetail() {
                     <CardContent className="flexx flex-colx items-startx">
                         <h4 className="font-semibold">User Stories</h4>
                         <Table>
-                            {/* <TableCaption>A list of your recent invoices.</TableCaption> */}
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>No.</TableHead>
                                     <TableHead>User Story</TableHead>
                                     <TableHead>Closed Story</TableHead>
-                                    <TableHead>Status</TableHead>
+                                    <TableHead className="flex items-center cursor-pointer" onClick={() => sortUserStories("status_extra_info.order")}>
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="size-5">
+                                            <path fillRule="evenodd" d="M10.53 3.47a.75.75 0 0 0-1.06 0L6.22 6.72a.75.75 0 0 0 1.06 1.06L10 5.06l2.72 2.72a.75.75 0 1 0 1.06-1.06l-3.25-3.25Zm-4.31 9.81 3.25 3.25a.75.75 0 0 0 1.06 0l3.25-3.25a.75.75 0 1 0-1.06-1.06L10 14.94l-2.72-2.72a.75.75 0 0 0-1.06 1.06Z" clipRule="evenodd" />
+                                        </svg>
+                                        Status
+                                    </TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -352,7 +399,7 @@ function ProjectScrumDetail() {
                                             <TableCell>
                                                 {swimlane && <><b className="text-gray-700">{swimlane}</b></>}
                                                 <br />
-                                                <a href={story.url} target="_blank">{story.subject}</a>
+                                                <a href={story.url} target="_blank" className="text-wrap">{story.subject}</a>
                                                 <div className="mt-1">
                                                     {story.tags.map((tag, tagIndex) => (
                                                         <Badge key={tagIndex} className="text-xs text-white mr-1.5" style={{ backgroundColor: tag[1] }}>

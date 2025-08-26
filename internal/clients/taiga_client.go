@@ -3,7 +3,6 @@ package clients
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"taiga-points/internal/models"
 )
 
@@ -110,6 +109,27 @@ func (c *TaigaClient) GetProject(authToken, slug string) (models.Project, error)
 	return project, nil
 }
 
+func (c *TaigaClient) GetProjectByID(authToken, projectID string) (models.Project, error) {
+
+	headers := getDefaultHeaders(authToken)
+
+	// query := map[string]string{
+	// 	"slug": slug,
+	// }
+
+	body, err := c.httpClient.Get(c.baseURL+"/projects/"+projectID, headers, nil)
+	if err != nil {
+		return models.Project{}, err
+	}
+
+	var project models.Project
+	if err := json.Unmarshal(body, &project); err != nil {
+		return models.Project{}, errors.New("failed to parse project response")
+	}
+
+	return project, nil
+}
+
 func (c *TaigaClient) GetMemberships(authToken, projectID string) ([]models.Membership, error) {
 
 	headers := getDefaultHeaders(authToken)
@@ -168,8 +188,6 @@ func (c *TaigaClient) GetUserStories(authToken string, params models.UserStoryPa
 	if params.IsArchived != "" {
 		query["status__is_archived"] = params.IsArchived
 	}
-
-	fmt.Println("query", query)
 
 	body, err := c.httpClient.Get(c.baseURL+"/userstories", headers, query)
 	if err != nil {
