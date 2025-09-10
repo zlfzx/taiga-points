@@ -66,3 +66,34 @@ func GetMilestone(w http.ResponseWriter, r *http.Request) {
 		Data:       milestone,
 	})
 }
+
+func GetMilestoneTeamWorkload(w http.ResponseWriter, r *http.Request) {
+	// get auth token from context
+	auth := r.Context().Value(contracts.AuthToken).(string)
+
+	// get query params
+	query := r.URL.Query()
+	projectID := query.Get("project")
+	milestoneID := query.Get("milestone_id")
+	if projectID == "" || milestoneID == "" {
+		responseJSON(w, r, models.HTTPResponse{
+			StatusCode: http.StatusBadRequest,
+			StatusText: "Bad Request",
+			Message:    "Missing project ID or milestone ID",
+		})
+		return
+	}
+
+	// get milestone team workload
+	workload, err := app.Services.Taiga.GetMilestoneTeamWorkload(auth, projectID, milestoneID)
+	if err != nil {
+		responseHTTPError(w, r, err)
+		return
+	}
+
+	responseJSON(w, r, models.HTTPResponse{
+		StatusCode: http.StatusOK,
+		StatusText: "OK",
+		Data:       workload,
+	})
+}

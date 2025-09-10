@@ -515,3 +515,96 @@ func (s *TaigaService) GetMilestone(authToken, milestoneID string) (models.Miles
 
 	return milestone, nil
 }
+
+func (s *TaigaService) GetMilestoneTeamWorkload(authToken, projectID, milestoneID string) ([]models.MilestoneTeamWorkload, error) {
+
+	// get project from cache or fetch from API
+	project, exists := Projects[projectID]
+	if !exists {
+		var err error
+		project, err = s.GetProjectByID(authToken, projectID)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	userStories, err := s.GetUserStories(authToken, models.UserStoryParams{
+		ProjectID:   projectID,
+		MilestoneID: milestoneID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	memberships, err := s.client.GetMemberships(authToken, projectID)
+	if err != nil {
+		return nil, err
+	}
+
+	// group user stories by assigned users
+	members := make(map[int][]models.UserStory)
+	for _, us := range userStories {
+		for _, memberID := range us.AssignedUsers {
+			members[memberID] = append(members[memberID], us)
+		}
+	}
+
+	var workloads []models.MilestoneTeamWorkload
+	for memberID, stories := range members {
+		var member models.Membership
+		for _, m := range memberships {
+			if m.UserID == memberID {
+				member = m
+				break
+			}
+		}
+
+		// filter only members with role points
+		if project.RolePoints != nil && slices.Contains(project.RolePoints, member.RoleID) {
+			workload := models.MilestoneTeamWorkload{
+				MemberID:    memberID,
+				Member:      member,
+				UserStories: stories,
+				TotalStory:  len(stories),
+				TotalPoint:  0,
+			}
+
+			// calculate total points
+			for _, us := range stories {
+				points := us.Points
+				role := strconv.Itoa(member.RoleID)
+				if pointID, ok := points[role]; ok {
+					pointValue := 0.0
+					for _, p := range project.Points {
+						if p.ID == pointID {
+							pointValue = p.Value
+							break
+						}
+					}
+					workload.TotalPoint += pointValue
+				}
+			}
+
+			workloads = append(workloads, workload)
+		}
+	}
+
+	// sort workloads by total points desc, then by total stories desc, then by member name asc
+	slices.SortStableFunc(workloads, func(a, b models.MilestoneTeamWorkload) int {
+		if a.TotalPoint != b.TotalPoint {
+			if a.TotalPoint > b.TotalPoint {
+				return -1
+			}
+			return 1
+		}
+		if a.TotalStory != b.TotalStory {
+			if a.TotalStory > b.TotalStory {
+				return -1
+			}
+			return 1
+		}
+		return strings.Compare(a.Member.FullName, b.Member.FullName)
+	})
+
+	return workloads, nil
+}

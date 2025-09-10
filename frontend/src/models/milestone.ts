@@ -1,3 +1,4 @@
+import type { Member } from "./member";
 import type { UserStory } from "./user_story";
 
 export interface Milestone {
@@ -28,3 +29,11 @@ export interface MilestoneCountData {
     user_story: number;
     total_points: number;
 }
+
+export interface MilestoneTeamWorkload {
+    member_id: number;
+    member: Member;
+    user_stories: UserStory[];
+    total_story: number;
+    total_point: number;
+};

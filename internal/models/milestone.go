@@ -79,3 +79,11 @@ type MilestoneUserStory struct {
 	TotalPoints       float64          `json:"total_points"`
 	Version           int              `json:"version"`
 }
+
+type MilestoneTeamWorkload struct {
+	MemberID    int         `json:"member_id"`
+	Member      Membership  `json:"member"`
+	UserStories []UserStory `json:"user_stories"`
+	TotalStory  int         `json:"total_story"`
+	TotalPoint  float64     `json:"total_point"`
+}

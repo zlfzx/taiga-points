@@ -10,7 +10,8 @@ import useSWR from "swr";
 import type { UserStory } from "@/models/user_story";
 import { Badge } from "@/components/ui/badge";
 import type { PieSectorDataItem } from "recharts/types/polar/Pie";
-import type { Milestone } from "@/models/milestone";
+import type { Milestone, MilestoneTeamWorkload } from "@/models/milestone";
+import userImg from "@/assets/user.png";
 
 type SortConfig = {
     key: string
@@ -70,6 +71,10 @@ function ProjectScrumDetail() {
         setSortConfig({ key, direction })
     }
 
+    const { data: milestoneTeamWorkload } = useSWR<MilestoneTeamWorkload[]>(`/api/milestone/team-workload?project=${project?.id}&milestone_id=${milestoneId}`, {
+        fetcher: (url: string) => api.get(url).then(res => res.data.data),
+    });
+
     if (error) return <p>Failed to load milestone details.</p>;
     if (isLoading) return <p>Loading milestone details...</p>;
     if (!milestone) return <p>Milestone not found.</p>;
@@ -79,9 +84,8 @@ function ProjectScrumDetail() {
     const formattedStart = estimatedStart.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
     const formattedFinish = estimatedFinish.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
 
-    // console.log("Milestone loaded:", milestone);
+    const progress = milestone.total_points ? (milestone.closed_points || 0) / milestone.total_points * 100 : 0;
 
-    // console.log("User Stories loaded:", userStories);
 
     const swimlaneColorMap = [
         // "#c4b5fd",
@@ -185,7 +189,7 @@ function ProjectScrumDetail() {
                 <Card className="transition-all duration-100 hover:shadow-md hover:bg-white/60 bg-white/40 backdrop-blur-md border-transparent shadow-white">
                     <CardContent>
                         <h4 className="font-semibold">Progress</h4>
-                        <p className="text-3xl font-bold">{milestone.total_points ? ((milestone.closed_points || 0) / milestone.total_points * 100).toFixed(2) : 0}%</p>
+                        <p className="text-3xl font-bold">{ progress != 100 ? progress.toFixed(2) : 100 }%</p>
                     </CardContent>
                 </Card>
             </div>
@@ -245,48 +249,8 @@ function ProjectScrumDetail() {
                     </CardContent>
                 </Card>
 
-                <Card className="transition-all duration-100 hover:shadow-md hover:bg-white/60 bg-white/40 backdrop-blur-md border-transparent shadow-white">
-                    <CardContent className="flexx flex-colx items-startx">
-                        <h4 className="font-semibold mb-2">Tag Distribution</h4>
+                
 
-                        <ChartContainer config={tagsChartConfig}>
-                            <BarChart
-                                accessibilityLayer
-                                data={tagsChartData}
-                                layout="vertical"
-                            >
-                                <YAxis
-                                    dataKey="tag"
-                                    type="category"
-                                    tickLine={false}
-                                    tickMargin={5}
-                                    axisLine={false}
-                                    interval={0}
-                                    tickFormatter={(value) => value}
-                                    width={Math.max(...tagsChartData.map(d => d.tag.length)) * 7}
-                                />
-                                <XAxis dataKey="user_story" type="number" hide />
-                                <ChartTooltip
-                                    cursor={true}
-                                    content={<ChartTooltipContent hideIndicator />}
-                                />
-                                <Bar dataKey="user_story" stackId="a" layout="vertical" radius={5} barSize={20} fill="var(--color-user_story)">
-                                    <LabelList
-                                        dataKey="user_story"
-                                        position="right"
-                                        offset={8}
-                                        className="fill-foreground"
-                                        fontSize={12}
-                                    />
-                                </Bar>
-                                <Bar dataKey="total_points" stackId="a" fill="transparent" />
-                            </BarChart>
-                        </ChartContainer>
-                    </CardContent>
-                </Card>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-5 mt-5">
                 <Card className="transition-all duration-100 hover:shadow-md hover:bg-white/60 bg-white/40 backdrop-blur-md border-transparent shadow-white">
                     <CardContent>
                         <h4 className="font-semibold mb-2">Status Distribution</h4>
@@ -351,14 +315,83 @@ function ProjectScrumDetail() {
                         </ChartContainer>
                     </CardContent>
                 </Card>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 gap-5 mt-5">
+                <Card className="transition-all duration-100 hover:shadow-md hover:bg-white/60 bg-white/40 backdrop-blur-md border-transparent shadow-white">
+                    <CardContent className="flexx flex-colx items-startx">
+                        <h4 className="font-semibold mb-2">Tag Distribution</h4>
+
+                        <ChartContainer config={tagsChartConfig}>
+                            <BarChart
+                                accessibilityLayer
+                                data={tagsChartData}
+                                layout="vertical"
+                            >
+                                <YAxis
+                                    dataKey="tag"
+                                    type="category"
+                                    tickLine={false}
+                                    tickMargin={5}
+                                    axisLine={false}
+                                    interval={0}
+                                    tickFormatter={(value) => value}
+                                    width={Math.max(...tagsChartData.map(d => d.tag.length)) * 7}
+                                />
+                                <XAxis dataKey="user_story" type="number" hide />
+                                <ChartTooltip
+                                    cursor={true}
+                                    content={<ChartTooltipContent hideIndicator />}
+                                />
+                                <Bar dataKey="user_story" stackId="a" layout="vertical" radius={5} barSize={20} fill="var(--color-user_story)">
+                                    <LabelList
+                                        dataKey="user_story"
+                                        position="right"
+                                        offset={8}
+                                        className="fill-foreground"
+                                        fontSize={12}
+                                    />
+                                </Bar>
+                                <Bar dataKey="total_points" stackId="a" fill="transparent" />
+                            </BarChart>
+                        </ChartContainer>
+                    </CardContent>
+                </Card>
 
                 <Card className="transition-all duration-100 hover:shadow-md hover:bg-white/60 bg-white/40 backdrop-blur-md border-transparent shadow-white">
                     <CardContent className="h-full">
-                        {/* <h4 className="font-semibold mb-2">Status Distribution</h4> */}
+                        <h4 className="font-semibold mb-2">Team Workload</h4>
 
-                        <div className="flex items-center justify-center h-full">
-                            <p className="text-2xl text-muted-foreground">Loading...</p>
-                        </div>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Name</TableHead>
+                                    <TableHead className="text-center">Total User Story</TableHead>
+                                    <TableHead className="text-center">Total Story Point</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {milestoneTeamWorkload && milestoneTeamWorkload.map((workload) => (
+                                    <TableRow key={workload.member_id}>
+                                        <TableCell>
+                                            <div className="flex items-center space-x-2">
+                                                <img
+                                                    src={workload.member.photo || userImg}
+                                                    alt={workload.member.full_name}
+                                                    className="w-8 h-8 rounded-full"
+                                                />
+                                                <div>
+                                                    <p>{workload.member.full_name}</p>
+                                                    <p className="text-xs text-muted-foreground">{workload.member.role_name}</p>
+                                                </div>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-center">{workload.total_story}</TableCell>
+                                        <TableCell className="text-center">{workload.total_point}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
                     </CardContent>
                 </Card>
             </div>
@@ -402,9 +435,9 @@ function ProjectScrumDetail() {
                                                 <a href={story.url} target="_blank" className="text-wrap">{story.subject}</a>
                                                 <div className="mt-1">
                                                     {story.tags.map((tag, tagIndex) => (
-                                                        <Badge key={tagIndex} className="text-xs text-white mr-1.5" style={{ backgroundColor: tag[1] }}>
+                                                        <span key={tagIndex} className="text-xs text-white mr-1.5 px-2 py-0.5 rounded-md" style={{ backgroundColor: tag[1] }}>
                                                             {tag[0]}
-                                                        </Badge>
+                                                        </span>
                                                     ))}
                                                 </div>
                                             </TableCell>
