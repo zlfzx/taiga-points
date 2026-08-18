@@ -25,6 +25,7 @@ func LoadRouters(embed embed.FS) (r *chi.Mux) {
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
 	r.Use(middleware.Logger)
+	r.Use(handlers.RateLimiterMiddleware)
 
 	r.Route("/api", func(r chi.Router) {
 		r.Route("/auth", func(r chi.Router) {

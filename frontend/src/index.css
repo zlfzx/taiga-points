@@ -67,6 +67,8 @@ button:focus-visible {
   }
 } */
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+
 @import "tailwindcss";
 
 @import "tw-animate-css";
@@ -284,5 +286,44 @@ button:focus-visible {
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'Inter', sans-serif;
+  }
+}
+@media print {
+  body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    background: white !important;
+  }
+  
+  .print\:hidden {
+    display: none !important;
+  }
+  
+  /* Reset Card Styles for Print */
+  .rounded-xl, .shadow-lg, .shadow-sm, .backdrop-blur-md, [class*="bg-white/80"] {
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    background-color: transparent !important;
+    border: 1px solid #e5e7eb !important; /* simple gray border instead of fancy ones */
+  }
+
+  /* Prevent page breaks inside cards, tables, and charts */
+  .grid > div,
+  table, tr,
+  .recharts-wrapper {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Ensure grids stack correctly if needed, or maintain their layout */
+  .print\:block {
+    display: block !important;
+  }
+  
+  /* Remove scrollbars and allow full height */
+  .overflow-y-auto, .overflow-x-auto, .max-h-\[350px\], .max-h-\[500px\] {
+    overflow: visible !important;
+    max-height: none !important;
   }
 }

@@ -151,7 +151,7 @@ func (c *TaigaClient) GetMemberships(authToken, projectID string) ([]models.Memb
 	return members, nil
 }
 
-func (c *TaigaClient) GetMemberhip(authToken, memberID string) (models.Membership, error) {
+func (c *TaigaClient) GetMembership(authToken, memberID string) (models.Membership, error) {
 
 	headers := getDefaultHeaders(authToken)
 
@@ -187,6 +187,10 @@ func (c *TaigaClient) GetUserStories(authToken string, params models.UserStoryPa
 
 	if params.IsArchived != "" {
 		query["status__is_archived"] = params.IsArchived
+	}
+
+	if params.AssignedTo != "" {
+		query["assigned_to"] = params.AssignedTo
 	}
 
 	body, err := c.httpClient.Get(c.baseURL+"/userstories", headers, query)

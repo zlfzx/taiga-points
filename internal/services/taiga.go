@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"taiga-points/internal/clients"
 	"taiga-points/internal/models"
 	"time"
@@ -24,7 +25,10 @@ type TaigaService struct {
 	client  *clients.TaigaClient
 }
 
-var Projects = map[string]models.Project{}
+var (
+	Projects   = map[string]models.Project{}
+	projectsMu sync.RWMutex
+)
 
 func NewTaigaService(baseURL string, db *sql.DB) *TaigaService {
 	return &TaigaService{
@@ -78,7 +82,9 @@ func (s *TaigaService) setProject(project models.Project) (models.Project, error
 
 	// cache project
 	projectID := strconv.Itoa(project.ID)
+	projectsMu.Lock()
 	Projects[projectID] = project
+	projectsMu.Unlock()
 
 	return project, nil
 }
@@ -104,12 +110,9 @@ func (s *TaigaService) GetProjectSetting(projectID string) (models.ProjectSettin
 		return models.ProjectSetting{}, err
 	}
 
-	// if err == sql.ErrNoRows {
-	// 	return models.Project{}, &clients.HTTPError{
-	// 		StatusCode: http.StatusNotFound,
-	// 		Body:       "project settings not found",
-	// 	}
-	// }
+	if err != nil && err != sql.ErrNoRows {
+		return models.ProjectSetting{}, err
+	}
 
 	var rolePoints []int
 	if rolePointsStr != "" {
@@ -233,7 +236,7 @@ func (s *TaigaService) GetMembers(authToken, projectID string) ([]models.Members
 }
 
 func (s *TaigaService) GetMember(authToken, memberID string) (models.Membership, error) {
-	member, err := s.client.GetMemberhip(authToken, memberID)
+	member, err := s.client.GetMembership(authToken, memberID)
 	if err != nil {
 		return models.Membership{}, err
 	}
@@ -265,6 +268,7 @@ func (s *TaigaService) GetMember(authToken, memberID string) (models.Membership,
 		userStoryParams := models.UserStoryParams{
 			ProjectID:  projectId,
 			IsArchived: "false",
+			AssignedTo: strconv.Itoa(member.UserID),
 		}
 		data, err := s.GetUserStories(authToken, userStoryParams)
 		userStoriesCh <- result[[]models.UserStory]{Data: data, Err: err}
@@ -277,30 +281,15 @@ func (s *TaigaService) GetMember(authToken, memberID string) (models.Membership,
 	for received < 2 {
 		select {
 		case <-ctx.Done():
-			// responseJSON(w, r, models.HTTPResponse{
-			// 	StatusCode: http.StatusRequestTimeout,
-			// 	StatusText: "Request Timeout",
-			// 	Message:    "Request took too long to process",
-			// })
 			return models.Membership{}, errors.New("request took too long to process")
 		case res := <-pointsCh:
 			if res.Err != nil {
-				// responseJSON(w, r, models.HTTPResponse{
-				// 	StatusCode: http.StatusInternalServerError,
-				// 	StatusText: "Internal Server Error",
-				// 	Message:    res.Err.Error(),
-				// })
 				return models.Membership{}, res.Err
 			}
 			points = res.Data
 			received++
 		case res := <-userStoriesCh:
 			if res.Err != nil {
-				// responseJSON(w, r, models.HTTPResponse{
-				// 	StatusCode: http.StatusInternalServerError,
-				// 	StatusText: "Internal Server Error",
-				// 	Message:    res.Err.Error(),
-				// })
 				return models.Membership{}, res.Err
 			}
 			userStories = res.Data
@@ -323,7 +312,7 @@ func (s *TaigaService) GetMember(authToken, memberID string) (models.Membership,
 
 	for _, userStory := range userStories {
 
-		// check if user story is assigned to the member
+		// The user stories are already filtered by the API, but we can keep the check
 		isAssigned := slices.Contains(userStory.AssignedUsers, member.UserID)
 		if !isAssigned {
 			continue // skip if user story is not assigned to the member
@@ -352,9 +341,6 @@ func (s *TaigaService) GetMember(authToken, memberID string) (models.Membership,
 		member.Stories = append(member.Stories, userStory)
 	}
 
-	// calculate remaining point
-	// member.RemainingPoint = member.MaxPoint - member.TotalPoint
-
 	// sort member's stories by milestone (desc), then swimlane (asc), then status (asc), then ID (asc)
 	slices.SortStableFunc(member.Stories, func(a, b models.UserStory) int {
 		if a.Milestone != b.Milestone {
@@ -375,7 +361,9 @@ func (s *TaigaService) GetMember(authToken, memberID string) (models.Membership,
 func (s *TaigaService) GetUserStories(authToken string, params models.UserStoryParams) ([]models.UserStory, error) {
 
 	// get project from cache or fetch from API
+	projectsMu.RLock()
 	project, exists := Projects[params.ProjectID]
+	projectsMu.RUnlock()
 	if !exists {
 		var err error
 		project, err = s.GetProjectByID(authToken, params.ProjectID)
@@ -421,7 +409,9 @@ func (s *TaigaService) GetMilestone(authToken, milestoneID string) (models.Miles
 		return models.Milestone{}, err
 	}
 
+	projectsMu.RLock()
 	project, exists := Projects[strconv.Itoa(milestone.ProjectExtraInfo.ID)]
+	projectsMu.RUnlock()
 	if !exists {
 		var err error
 		project, err = s.GetProject(authToken, milestone.ProjectExtraInfo.Slug)
@@ -519,7 +509,9 @@ func (s *TaigaService) GetMilestone(authToken, milestoneID string) (models.Miles
 func (s *TaigaService) GetMilestoneTeamWorkload(authToken, projectID, milestoneID string) ([]models.MilestoneTeamWorkload, error) {
 
 	// get project from cache or fetch from API
+	projectsMu.RLock()
 	project, exists := Projects[projectID]
+	projectsMu.RUnlock()
 	if !exists {
 		var err error
 		project, err = s.GetProjectByID(authToken, projectID)

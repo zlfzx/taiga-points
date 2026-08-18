@@ -13,6 +13,7 @@ export interface Milestone {
     count_swimlanes: MilestoneCountData[];
     count_tags: MilestoneCountData[];
     count_statuses: MilestoneCountData[];
+    closed: boolean;
     // ref: number;
     // project_id: number;
     // subject: string;

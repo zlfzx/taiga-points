@@ -4,17 +4,52 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"sync"
 	"taiga-points/internal/clients"
 	"taiga-points/internal/contracts"
 	"taiga-points/internal/models"
 
 	"github.com/go-chi/render"
+	"golang.org/x/time/rate"
 )
 
 var app *contracts.App
+var (
+	visitors = make(map[string]*rate.Limiter)
+	mu       sync.Mutex
+)
 
 func Init(a *contracts.App) {
 	app = a
+}
+
+func getVisitor(ip string) *rate.Limiter {
+	mu.Lock()
+	defer mu.Unlock()
+
+	limiter, exists := visitors[ip]
+	if !exists {
+		limiter = rate.NewLimiter(rate.Limit(10), 20)
+		visitors[ip] = limiter
+	}
+
+	return limiter
+}
+
+func RateLimiterMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ip := r.RemoteAddr
+		limiter := getVisitor(ip)
+		if !limiter.Allow() {
+			responseJSON(w, r, models.HTTPResponse{
+				StatusCode: http.StatusTooManyRequests,
+				StatusText: "Too Many Requests",
+				Message:    "Rate limit exceeded",
+			})
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 func getHeaderAuth(r *http.Request) string {

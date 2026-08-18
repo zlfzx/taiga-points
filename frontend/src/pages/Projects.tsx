@@ -16,10 +16,9 @@ function Projects() {
     });
     const logout = useLogout();
 
-    console.log("Projects:", projects);
 
     return (
-        <div className="container mx-auto px-6 py-12">
+        <div className="max-w-[1400px] w-full mx-auto px-4 sm:px-8 py-12 min-h-screen">
             <WindowLayout>
                 <WindowHeader>
                     <div className="flex flex-wrap">
@@ -33,8 +32,8 @@ function Projects() {
                             <p className="text-muted-foreground text-lg">{user.email}</p>
                         </div>
                         <div className="flex-1 flex items-center justify-end">
-                            <Button variant="secondary" className="bg-yellow-300 hover:bg-yellow-400 text-gray-800 hover:text-gray-900 transition-colors duration-200 cursor-pointer" onClick={logout}>
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
+                            <Button variant="secondary" className="bg-white/60 hover:bg-red-500 hover:text-white text-slate-700 transition-colors duration-200 cursor-pointer" onClick={logout}>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6 mr-2">
                                     <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 3-3m-3 3H15" />
                                 </svg>
                                 Logout
@@ -43,25 +42,25 @@ function Projects() {
                     </div>
                 </WindowHeader>
                 <WindowContent>
-                    <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight mb-3">
+                    <h3 className="scroll-m-20 text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-700 to-indigo-600 bg-clip-text text-transparent pb-1 mb-2 mt-2">
                         List of Projects
                     </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6 mt-5">
+                    <div className="flex flex-wrap justify-center gap-8 mt-8">
                         {projects.map((item, index) => (
-                            <Card key={index} className="justify-between transition-all duration-100 hover:shadow-md hover:bg-white/50 hover:border-white/30 bg-white/40 backdrop-blur-md border-transparent shadow-white">
-                                <CardHeader className="flex flex-col items-center justify-center">
-                                    <Avatar className="w-24 h-24 rounded mb-3">
+                            <Card key={index} className="flex flex-col justify-between w-full max-w-[350px] transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-900/20 hover:bg-white hover:border-white/80 bg-white/80 backdrop-blur-md border-white/40 shadow-sm shadow-blue-900/10">
+                                <CardHeader className="flex flex-col items-center justify-center text-center">
+                                    <Avatar className="w-28 h-28 rounded-xl shadow-md border border-white/50 mb-4">
                                         <AvatarImage src={item.logo_big_url ? item.logo_big_url : projectImg} />
                                     </Avatar>
-                                    <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
+                                    <CardTitle className="text-2xl font-semibold tabular-nums">
                                         {item.name}
                                     </CardTitle>
-                                    <CardDescription>{item.description}</CardDescription>
+                                    <CardDescription className="line-clamp-3 mt-2">{item.description}</CardDescription>
                                 </CardHeader>
-                                <CardFooter>
-                                    <Button variant="secondary" className="w-full bg-white shadow-md hover:bg-white/80 hover:shadow-lg transition-colors duration-200 text-gray-800 hover:text-gray-900">
-                                        <Link to={`/project/${item.slug}`} className="w-full">
-                                            Detail
+                                <CardFooter className="pt-4">
+                                    <Button variant="secondary" className="w-full bg-blue-500 text-white shadow-md hover:bg-blue-600 hover:shadow-lg transition-colors duration-200">
+                                        <Link to={`/project/${item.slug}`} className="flex items-center justify-center w-full">
+                                            Buka Dashboard
                                         </Link>
                                     </Button>
                                 </CardFooter>

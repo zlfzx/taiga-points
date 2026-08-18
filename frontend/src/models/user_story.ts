@@ -10,7 +10,8 @@ export interface UserStory {
     tags: string[][];
     swimlane: number;
     points: { [key: string]: number };
-    point: number;
+    point?: number;
+    total_points?: number;
     is_closed: boolean;
     assigned_users: number[];
     milestone: number;

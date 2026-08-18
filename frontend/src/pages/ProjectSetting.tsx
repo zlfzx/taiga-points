@@ -86,14 +86,14 @@ function ProjectSetting() {
     }
 
     return (
-        <div>
-            <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight mb-3">
+        <div className="pb-10">
+            <h3 className="scroll-m-20 text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-700 to-indigo-600 bg-clip-text text-transparent pb-1 mb-6 mt-2">
                 Project Settings
             </h3>
 
-            <div className="flex flex-col items-start gap-6">
-                <div className="flex flex-col gap-2">
-                    <Label>Max Story Point:</Label>
+            <div className="flex flex-col items-start gap-8 bg-white/40 backdrop-blur-md rounded-2xl p-6 md:p-8 border border-white/60 shadow-sm w-full">
+                <div className="flex flex-col gap-3 w-full border-b border-gray-200/50 pb-8">
+                    <Label className="text-base font-semibold text-gray-800">Max Story Point</Label>
                     <Input
                         id="maxPoint"
                         name="maxPoint"
@@ -110,13 +110,16 @@ function ProjectSetting() {
                     </p>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                    <Label>Select Roles for Story Point Calculation:</Label>
-                    <div className="flex flex-row flex-wrap gap-2 w-2/4">
+                <div className="flex flex-col gap-3 w-full border-b border-gray-200/50 pb-8">
+                    <Label className="text-base font-semibold text-gray-800">Roles for Story Point Calculation</Label>
+                    <p className="text-sm text-muted-foreground -mt-2 mb-2">
+                        Choose which roles should count toward the total story points per member.
+                    </p>
+                    <div className="flex flex-row flex-wrap gap-2 w-full max-w-3xl">
                         {project && project.roles && project.roles.map((role, index) => (
                             <Toggle
                                 key={index}
-                                className={`bg-accent/50 hover:bg-accent/80 border-transparent cursor-pointer data-[state=on]:bg-white data-[state=on]:border data-[state=on]:border-gray-500 data-[state=on]:font-boldx disabled:opacity-80`}
+                                className={`bg-white/60 hover:bg-white border border-gray-200 cursor-pointer data-[state=on]:bg-blue-50 data-[state=on]:border-blue-300 data-[state=on]:text-blue-700 data-[state=on]:shadow-sm transition-all duration-200 disabled:opacity-50`}
                                 variant={"outline"}
                                 pressed={rolePoints.includes(role.id)}
                                 onPressedChange={(checked) => {
@@ -132,19 +135,19 @@ function ProjectSetting() {
                             </Toggle>
                         ))}
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                        Choose which roles should count toward the total story points per member.
-                    </p>
                 </div>
 
-                <div className="flex flex-col gap-2">
-                    <Label>Select Statuses for Story Point Calculation:</Label>
-                    <div className="flex flex-row flex-wrap gap-2 w-2/4">
+                <div className="flex flex-col gap-3 w-full pb-4">
+                    <Label className="text-base font-semibold text-gray-800">Statuses for Story Point Calculation</Label>
+                    <p className="text-sm text-muted-foreground -mt-2 mb-2">
+                        Choose which statuses should count toward the total story points per member.
+                    </p>
+                    <div className="flex flex-row flex-wrap gap-3 w-full max-w-3xl">
                         {project && project.us_statuses && project.us_statuses.map((status, index) => (
                             <Toggle
                                 key={index}
-                                className={`bg-accent/50 hover:bg-accent/80 border-transparent cursor-pointer data-[state=on]:bg-white data-[state=on]:border data-[state=on]:border-gray-500 data-[state=on]:font-boldx disabled:opacity-80`}
-                                style={{ color: status.color }}
+                                className={`bg-white/60 hover:bg-white border border-gray-200 cursor-pointer data-[state=on]:bg-white data-[state=on]:shadow-sm transition-all duration-200 disabled:opacity-50 rounded-full px-4`}
+                                style={statusPoints.includes(status.id) ? { color: status.color, borderColor: status.color, backgroundColor: `${status.color}15` } : { color: status.color }}
                                 variant={"outline"}
                                 pressed={statusPoints.includes(status.id)}
                                 onPressedChange={(checked) => {
@@ -160,18 +163,17 @@ function ProjectSetting() {
                             </Toggle>
                         ))}
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                        Choose which statuses should count toward the total story points per member.
-                    </p>
                 </div>
 
                 { hasSettingPermission && (
-                    <Button
-                        className="cursor-pointer bg-yellow-400 hover:bg-yellow-500 text-foreground transition-colors duration-200"
-                        onClick={saveSettings}
-                    >
-                        Save Settings
-                    </Button>
+                    <div className="pt-2 w-full">
+                        <Button
+                            className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-colors duration-300 px-8 py-6 rounded-xl text-md font-semibold"
+                            onClick={saveSettings}
+                        >
+                            Save Settings
+                        </Button>
+                    </div>
                 )}
             </div>
         </div>

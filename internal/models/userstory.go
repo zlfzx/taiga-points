@@ -54,4 +54,5 @@ type UserStoryParams struct {
 	ProjectID   string
 	MilestoneID string
 	IsArchived  string
+	AssignedTo  string
 }

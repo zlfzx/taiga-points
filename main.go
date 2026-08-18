@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"time"
 	"taiga-points/internal/contracts"
 	"taiga-points/internal/database"
 	"taiga-points/internal/handlers"
@@ -44,7 +45,16 @@ func main() {
 
 	port := os.Getenv("APP_PORT")
 	slog.Info("Starting server", "port", port)
-	if err := http.ListenAndServe(":"+port, router); err != nil {
+	
+	srv := &http.Server{
+		Addr:         ":" + port,
+		Handler:      router,
+		ReadTimeout:  15 * time.Second,
+		WriteTimeout: 15 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+	
+	if err := srv.ListenAndServe(); err != nil {
 		slog.Error("Error starting server", "err", err)
 	}
 }
