@@ -78,6 +78,9 @@ func (s *TaigaService) setProject(project models.Project) (models.Project, error
 		project.MaxPoints = projectSetting.MaxPoints
 		project.RolePoints = projectSetting.RolePoints
 		project.StatusPoints = projectSetting.StatusPoints
+		if projectSetting.MemberStoryCustomFieldFilter != nil {
+			project.MemberStoryCustomFieldFilter = *projectSetting.MemberStoryCustomFieldFilter
+		}
 	}
 
 	// cache project
@@ -94,7 +97,13 @@ func (s *TaigaService) GetProjectSetting(projectID string) (models.ProjectSettin
 	var rolePointsStr, statusPointsStr string
 	err := s.db.QueryRow(`
 		SELECT 
-			id, name, slug, max_points, role_points, status_points 
+			id, 
+			name, 
+			slug, 
+			max_points, 
+			role_points, 
+			status_points,
+			member_story_custom_field_filter
 		FROM project_settings 
 		WHERE id = ?
 	`, projectID).Scan(
@@ -104,6 +113,7 @@ func (s *TaigaService) GetProjectSetting(projectID string) (models.ProjectSettin
 		&project.MaxPoints,
 		&rolePointsStr,
 		&statusPointsStr,
+		&project.MemberStoryCustomFieldFilter,
 	)
 
 	if err != nil && err != sql.ErrNoRows {
@@ -161,8 +171,16 @@ func (s *TaigaService) SetProjectSettings(authToken string, projectSetting model
 	if savedProject.ID == 0 {
 		// create new project settings
 		_, err = s.db.Exec(`
-			INSERT INTO project_settings (id, name, slug, max_points, role_points, status_points)
-			VALUES (?, ?, ?, ?, ?, ?)
+			INSERT INTO project_settings (
+				id, 
+				name, 
+				slug, 
+				max_points, 
+				role_points, 
+				status_points,
+				member_story_custom_field_filter
+			)
+			VALUES (?, ?, ?, ?, ?, ?, ?)
 		`,
 			project.ID,
 			project.Name,
@@ -170,6 +188,7 @@ func (s *TaigaService) SetProjectSettings(authToken string, projectSetting model
 			projectSetting.MaxPoints,
 			projectSetting.RolePoints,
 			projectSetting.StatusPoints,
+			projectSetting.MemberStoryCustomFieldFilter,
 		)
 
 		if err != nil {
@@ -182,12 +201,14 @@ func (s *TaigaService) SetProjectSettings(authToken string, projectSetting model
 			SET 
 				max_points = ?, 
 				role_points = ?,
-				status_points = ?
+				status_points = ?,
+				member_story_custom_field_filter = ?
 			WHERE id = ?
 		`,
 			projectSetting.MaxPoints,
 			projectSetting.RolePoints,
 			projectSetting.StatusPoints,
+			projectSetting.MemberStoryCustomFieldFilter,
 			project.ID,
 		)
 
@@ -393,6 +414,10 @@ func (s *TaigaService) GetUserStories(authToken string, params models.UserStoryP
 	}
 
 	return userStories, nil
+}
+
+func (s *TaigaService) GetUserStoryCustomAttributes(authToken, projectID string) ([]models.UserStoryCustomAttribute, error) {
+	return s.client.GetUserStoryCustomAttributes(authToken, projectID)
 }
 
 func (s *TaigaService) GetPoints(authToken, projectID string) ([]models.Point, error) {

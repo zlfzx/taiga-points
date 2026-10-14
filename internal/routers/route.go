@@ -48,6 +48,8 @@ func LoadRouters(embed embed.FS) (r *chi.Mux) {
 			r.Get("/milestone/team-workload", handlers.GetMilestoneTeamWorkload)
 
 			r.Get("/user-stories", handlers.GetUserStories)
+
+			r.Get("/user-story-custom-attributes", handlers.GetUserStoryCustomAttributes)
 		})
 	})
 

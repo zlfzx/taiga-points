@@ -32,6 +32,16 @@ type UserStory struct {
 	Tags             [][]string       `json:"tags"`
 }
 
+type UserStoryCustomAttribute struct {
+	ID          int      `json:"id"`
+	ProjectID   int      `json:"project"`
+	Name        string   `json:"name"`
+	Description string   `json:"description"`
+	Type        string   `json:"type"`
+	Order       int      `json:"order"`
+	Extra       []string `json:"extra"`
+}
+
 type StatusExtraInfo struct {
 	ID       int    `json:"id"`
 	Name     string `json:"name"`

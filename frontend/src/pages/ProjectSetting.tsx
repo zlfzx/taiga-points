@@ -1,10 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Toggle } from "@/components/ui/toggle";
 import api from "@/lib/axios";
 import type { Project } from "@/models/project";
+import type { UserStoryCustomAttribute } from "@/models/user_story"
 import { useEffect, useState } from "react";
 import { useRevalidator, useRouteLoaderData } from "react-router";
 import { toast } from "sonner";
@@ -18,14 +20,20 @@ function ProjectSetting() {
     const [maxPoint, setMaxPoint] = useState<number>(0);
     const [rolePoints, setRolePoints] = useState<number[]>([]);
     const [statusPoints, setStatusPoints] = useState<number[]>([]);
+    const [memberStoryCustomFieldFilter, setMemberStoryCustomFieldFilter] = useState<string>('');
+    const [selectedCustomAttribute, setSelectedCustomAttribute] = useState<UserStoryCustomAttribute | null>(null);
     const [hasSettingPermission, setHasSettingPermission] = useState<boolean>(false);
     const revalidator = useRevalidator();
 
-    const { data: projectSetting, isLoading } = useSWR(project ? `/api/project?slug=${project.slug}` : null, {
+    const { data: projectSetting, isLoading } = useSWR<Project>(project ? `/api/project?slug=${project.slug}` : null, {
         fetcher: (url: string) => api.get(url).then(res => res.data.data),
         // revalidateOnFocus: false,
         // revalidateOnReconnect: false,
     });
+
+    const { data: userStoryCustomAttributes } = useSWR<UserStoryCustomAttribute[]>(project ? `/api/user-story-custom-attributes?project=${project.id}` : null, {
+        fetcher: (url: string) => api.get(url).then(res => res.data.data)
+    })
 
     const saveSettings = async () => {
         if (!project) {
@@ -38,6 +46,7 @@ function ProjectSetting() {
             max_points: maxPoint,
             role_points: rolePoints.join(','),
             status_points: statusPoints.join(','),
+            member_story_custom_field_filter: memberStoryCustomFieldFilter
         };
 
         try {
@@ -69,12 +78,24 @@ function ProjectSetting() {
             setMaxPoint(projectSetting.max_points || 0);
             setRolePoints(projectSetting.role_points ? projectSetting.role_points.map(Number) : []);
             setStatusPoints(projectSetting.status_points ? projectSetting.status_points.map(Number) : []);
+            setMemberStoryCustomFieldFilter(projectSetting.member_story_custom_field_filter || '')
         }
 
         if (project && project.i_am_admin || project && project.i_am_owner) {
             setHasSettingPermission(true);
         }
     }, [projectSetting, project]);
+
+    useEffect(() => {
+        if (userStoryCustomAttributes) {
+            const customAttribute = userStoryCustomAttributes.find(attr => attr.id.toString() === memberStoryCustomFieldFilter);
+            if (customAttribute) {
+                setSelectedCustomAttribute(customAttribute);
+            } else {
+                setSelectedCustomAttribute(null);
+            }
+        }
+    }, [memberStoryCustomFieldFilter, userStoryCustomAttributes]);
 
     if (isLoading) {
         return (
@@ -165,7 +186,58 @@ function ProjectSetting() {
                     </div>
                 </div>
 
-                { hasSettingPermission && (
+                <div className="flex flex-col gap-3 w-full pb-4">
+                    <Label className="text-base font-semibold text-gray-800">Custom Filter for Member User Stories</Label>
+                    <p className="text-sm text-muted-foreground -mt-2 mb-2">
+                        Choose which custom field should be used to filter the user stories for each member. This allows you to customize how user stories are assigned and tracked based on specific criteria.
+                    </p>
+                    <div className="flex flex-row gap-8">
+                        <div className="flex flex-col gap-2">
+                            <Label className="text-sm font-medium text-gray-700">Select Custom Attribute</Label>
+                            <Select onValueChange={(value) => setMemberStoryCustomFieldFilter(value)} value={memberStoryCustomFieldFilter}>
+                                <SelectTrigger className="w-56">
+                                    <SelectValue placeholder="Select Custom Attribute" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        {userStoryCustomAttributes && userStoryCustomAttributes.length > 0 ? (
+                                            userStoryCustomAttributes.map((attribute) => (
+                                                <SelectItem key={attribute.id} value={attribute.id.toString()}>
+                                                    {attribute.name}
+                                                </SelectItem>
+                                            ))
+                                        ) : (
+                                            <SelectItem value="none" disabled>No custom attributes found</SelectItem>
+                                        )}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="flex flex-col gap-2">
+                            {selectedCustomAttribute && selectedCustomAttribute.type === 'dropdown' && (
+                                <div>
+                                    <Label className="text-sm font-medium text-gray-700">Dropdown Values</Label>
+                                    <div className="mt-4">
+                                        <div className="flex flex-wrap gap-2 mt-2">
+                                            {selectedCustomAttribute.extra && selectedCustomAttribute.extra.length > 0 ? (
+                                                selectedCustomAttribute.extra.map((value, index) => (
+                                                    <span key={index} className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-sm">
+                                                        {value}
+                                                    </span>
+                                                ))
+                                            ) : (
+                                                <span className="text-sm text-gray-500">No dropdown values available</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {hasSettingPermission && (
                     <div className="pt-2 w-full">
                         <Button
                             className="cursor-pointer bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-colors duration-300 px-8 py-6 rounded-xl text-md font-semibold"

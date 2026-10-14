@@ -25,3 +25,13 @@ export interface StatusExtraInfo {
     color: string;
     is_closed: boolean;
 }
+
+export interface UserStoryCustomAttribute {
+    id: number;
+    project_id: number;
+    name: string;
+    description: string;
+    type: string;
+    order: number;
+    extra: string[];
+}
