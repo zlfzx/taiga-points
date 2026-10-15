@@ -30,6 +30,20 @@ var (
 	projectsMu sync.RWMutex
 )
 
+// customAttributesCacheTTL controls how long cached user story custom attribute
+// definitions are considered fresh before being re-fetched from Taiga.
+const customAttributesCacheTTL = 10 * time.Minute
+
+type customAttributesCacheEntry struct {
+	attributes []models.UserStoryCustomAttribute
+	fetchedAt  time.Time
+}
+
+var (
+	customAttributesCache   = map[string]customAttributesCacheEntry{}
+	customAttributesCacheMu sync.RWMutex
+)
+
 func NewTaigaService(baseURL string, db *sql.DB) *TaigaService {
 	return &TaigaService{
 		baseURL: baseURL,
@@ -78,8 +92,8 @@ func (s *TaigaService) setProject(project models.Project) (models.Project, error
 		project.MaxPoints = projectSetting.MaxPoints
 		project.RolePoints = projectSetting.RolePoints
 		project.StatusPoints = projectSetting.StatusPoints
-		if projectSetting.MemberStoryCustomFieldFilter != nil {
-			project.MemberStoryCustomFieldFilter = *projectSetting.MemberStoryCustomFieldFilter
+		if projectSetting.UserStoryCustomAttributeFilter != nil {
+			project.UserStoryCustomAttributeFilter = *projectSetting.UserStoryCustomAttributeFilter
 		}
 	}
 
@@ -103,7 +117,7 @@ func (s *TaigaService) GetProjectSetting(projectID string) (models.ProjectSettin
 			max_points, 
 			role_points, 
 			status_points,
-			member_story_custom_field_filter
+			user_story_custom_attribute_filter
 		FROM project_settings 
 		WHERE id = ?
 	`, projectID).Scan(
@@ -113,7 +127,7 @@ func (s *TaigaService) GetProjectSetting(projectID string) (models.ProjectSettin
 		&project.MaxPoints,
 		&rolePointsStr,
 		&statusPointsStr,
-		&project.MemberStoryCustomFieldFilter,
+		&project.UserStoryCustomAttributeFilter,
 	)
 
 	if err != nil && err != sql.ErrNoRows {
@@ -178,7 +192,7 @@ func (s *TaigaService) SetProjectSettings(authToken string, projectSetting model
 				max_points, 
 				role_points, 
 				status_points,
-				member_story_custom_field_filter
+				user_story_custom_attribute_filter
 			)
 			VALUES (?, ?, ?, ?, ?, ?, ?)
 		`,
@@ -188,7 +202,7 @@ func (s *TaigaService) SetProjectSettings(authToken string, projectSetting model
 			projectSetting.MaxPoints,
 			projectSetting.RolePoints,
 			projectSetting.StatusPoints,
-			projectSetting.MemberStoryCustomFieldFilter,
+			projectSetting.UserStoryCustomAttributeFilter,
 		)
 
 		if err != nil {
@@ -202,13 +216,13 @@ func (s *TaigaService) SetProjectSettings(authToken string, projectSetting model
 				max_points = ?, 
 				role_points = ?,
 				status_points = ?,
-				member_story_custom_field_filter = ?
+				user_story_custom_attribute_filter = ?
 			WHERE id = ?
 		`,
 			projectSetting.MaxPoints,
 			projectSetting.RolePoints,
 			projectSetting.StatusPoints,
-			projectSetting.MemberStoryCustomFieldFilter,
+			projectSetting.UserStoryCustomAttributeFilter,
 			project.ID,
 		)
 
@@ -376,7 +390,66 @@ func (s *TaigaService) GetMember(authToken, memberID string) (models.Membership,
 		return b.ID - a.ID
 	})
 
+	// populate the selected custom field value for each story, if a custom
+	// field is configured for this project.
+	if projectSetting.UserStoryCustomAttributeFilter != nil {
+		customFieldID := strings.TrimSpace(*projectSetting.UserStoryCustomAttributeFilter)
+		if customFieldID != "" {
+			// resolve the custom attribute's name so it can be attached to each
+			// story alongside its value.
+			customFieldName := ""
+			if attrs, err := s.GetUserStoryCustomAttributes(authToken, projectId); err == nil {
+				for _, attr := range attrs {
+					if strconv.Itoa(attr.ID) == customFieldID {
+						customFieldName = attr.Name
+						break
+					}
+				}
+			}
+
+			s.populateStoryCustomFieldValues(authToken, member.Stories, customFieldID, customFieldName)
+		}
+	}
+
 	return member, nil
+}
+
+// populateStoryCustomFieldValues fetches the custom attribute values for each
+// story concurrently (Taiga exposes values per story only) and fills in the
+// value matching customFieldID, tagging it with customFieldName. A bounded
+// worker pool limits the number of in-flight requests to Taiga. Stories are
+// modified in place.
+func (s *TaigaService) populateStoryCustomFieldValues(authToken string, stories []models.UserStory, customFieldID, customFieldName string) {
+	if len(stories) == 0 {
+		return
+	}
+
+	const maxConcurrency = 5
+	sem := make(chan struct{}, maxConcurrency)
+	var wg sync.WaitGroup
+
+	for i := range stories {
+		wg.Add(1)
+		sem <- struct{}{}
+		go func(idx int) {
+			defer wg.Done()
+			defer func() { <-sem }()
+
+			values, err := s.client.GetUserStoryCustomAttributesValues(authToken, strconv.Itoa(stories[idx].ID))
+			if err != nil {
+				// leave the value empty on error rather than failing the whole request
+				return
+			}
+			if values.AttributesValues != nil {
+				stories[idx].CustomAttribute = &models.CustomAttributeValue{
+					Attribute: customFieldName,
+					Value:     values.AttributesValues[customFieldID],
+				}
+			}
+		}(i)
+	}
+
+	wg.Wait()
 }
 
 func (s *TaigaService) GetUserStories(authToken string, params models.UserStoryParams) ([]models.UserStory, error) {
@@ -417,7 +490,28 @@ func (s *TaigaService) GetUserStories(authToken string, params models.UserStoryP
 }
 
 func (s *TaigaService) GetUserStoryCustomAttributes(authToken, projectID string) ([]models.UserStoryCustomAttribute, error) {
-	return s.client.GetUserStoryCustomAttributes(authToken, projectID)
+	// serve from cache when the entry is still fresh
+	customAttributesCacheMu.RLock()
+	entry, ok := customAttributesCache[projectID]
+	customAttributesCacheMu.RUnlock()
+	if ok && time.Since(entry.fetchedAt) < customAttributesCacheTTL {
+		return entry.attributes, nil
+	}
+
+	// cache miss or stale: fetch from Taiga and refresh the cache
+	attributes, err := s.client.GetUserStoryCustomAttributes(authToken, projectID)
+	if err != nil {
+		return nil, err
+	}
+
+	customAttributesCacheMu.Lock()
+	customAttributesCache[projectID] = customAttributesCacheEntry{
+		attributes: attributes,
+		fetchedAt:  time.Now(),
+	}
+	customAttributesCacheMu.Unlock()
+
+	return attributes, nil
 }
 
 func (s *TaigaService) GetPoints(authToken, projectID string) ([]models.Point, error) {

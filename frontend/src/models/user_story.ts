@@ -18,6 +18,12 @@ export interface UserStory {
     milestone_name: string;
     milestone_slug: string;
     url: string;
+    custom_attribute?: CustomAttribute;
+}
+
+export interface CustomAttribute {
+    attribute: string;
+    value: string;
 }
 
 export interface StatusExtraInfo {

@@ -227,6 +227,23 @@ func (c *TaigaClient) GetUserStoryCustomAttributes(authToken, projectID string) 
 	return customAttributes, nil
 }
 
+func (c *TaigaClient) GetUserStoryCustomAttributesValues(authToken, storyID string) (models.UserStoryCustomAttributesValues, error) {
+
+	headers := getDefaultHeaders(authToken)
+
+	body, err := c.httpClient.Get(c.baseURL+"/userstories/custom-attributes-values/"+storyID, headers, nil)
+	if err != nil {
+		return models.UserStoryCustomAttributesValues{}, err
+	}
+
+	var values models.UserStoryCustomAttributesValues
+	if err := json.Unmarshal(body, &values); err != nil {
+		return models.UserStoryCustomAttributesValues{}, errors.New("failed to parse user story custom attributes values response")
+	}
+
+	return values, nil
+}
+
 func (c *TaigaClient) GetPoints(authToken, projectID string) ([]models.Point, error) {
 
 	headers := getDefaultHeaders(authToken)

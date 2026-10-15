@@ -17,10 +17,10 @@ type Project struct {
 	IAmMember    bool               `json:"i_am_member"`
 	// Members      []ProjectMember `json:"members"`
 
-	MaxPoints                    float64 `json:"max_points"`
-	RolePoints                   []int   `json:"role_points"`
-	StatusPoints                 []int   `json:"status_points"`
-	MemberStoryCustomFieldFilter string  `json:"member_story_custom_field_filter"`
+	MaxPoints                      float64 `json:"max_points"`
+	RolePoints                     []int   `json:"role_points"`
+	StatusPoints                   []int   `json:"status_points"`
+	UserStoryCustomAttributeFilter string  `json:"user_story_custom_attribute_filter"`
 }
 
 type Swimlane struct {

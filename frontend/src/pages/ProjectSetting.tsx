@@ -20,7 +20,7 @@ function ProjectSetting() {
     const [maxPoint, setMaxPoint] = useState<number>(0);
     const [rolePoints, setRolePoints] = useState<number[]>([]);
     const [statusPoints, setStatusPoints] = useState<number[]>([]);
-    const [memberStoryCustomFieldFilter, setMemberStoryCustomFieldFilter] = useState<string>('');
+    const [userStoryCustomAttributeFilter, setUserStoryCustomAttributeFilter] = useState<string>('');
     const [selectedCustomAttribute, setSelectedCustomAttribute] = useState<UserStoryCustomAttribute | null>(null);
     const [hasSettingPermission, setHasSettingPermission] = useState<boolean>(false);
     const revalidator = useRevalidator();
@@ -46,7 +46,7 @@ function ProjectSetting() {
             max_points: maxPoint,
             role_points: rolePoints.join(','),
             status_points: statusPoints.join(','),
-            member_story_custom_field_filter: memberStoryCustomFieldFilter
+            user_story_custom_attribute_filter: userStoryCustomAttributeFilter
         };
 
         try {
@@ -78,7 +78,7 @@ function ProjectSetting() {
             setMaxPoint(projectSetting.max_points || 0);
             setRolePoints(projectSetting.role_points ? projectSetting.role_points.map(Number) : []);
             setStatusPoints(projectSetting.status_points ? projectSetting.status_points.map(Number) : []);
-            setMemberStoryCustomFieldFilter(projectSetting.member_story_custom_field_filter || '')
+            setUserStoryCustomAttributeFilter(projectSetting.user_story_custom_attribute_filter || '')
         }
 
         if (project && project.i_am_admin || project && project.i_am_owner) {
@@ -88,14 +88,14 @@ function ProjectSetting() {
 
     useEffect(() => {
         if (userStoryCustomAttributes) {
-            const customAttribute = userStoryCustomAttributes.find(attr => attr.id.toString() === memberStoryCustomFieldFilter);
+            const customAttribute = userStoryCustomAttributes.find(attr => attr.id.toString() === userStoryCustomAttributeFilter);
             if (customAttribute) {
                 setSelectedCustomAttribute(customAttribute);
             } else {
                 setSelectedCustomAttribute(null);
             }
         }
-    }, [memberStoryCustomFieldFilter, userStoryCustomAttributes]);
+    }, [userStoryCustomAttributeFilter, userStoryCustomAttributes]);
 
     if (isLoading) {
         return (
@@ -194,7 +194,7 @@ function ProjectSetting() {
                     <div className="flex flex-row gap-8">
                         <div className="flex flex-col gap-2">
                             <Label className="text-sm font-medium text-gray-700">Select Custom Attribute</Label>
-                            <Select onValueChange={(value) => setMemberStoryCustomFieldFilter(value)} value={memberStoryCustomFieldFilter}>
+                            <Select onValueChange={(value) => setUserStoryCustomAttributeFilter(value)} value={userStoryCustomAttributeFilter}>
                                 <SelectTrigger className="w-56">
                                     <SelectValue placeholder="Select Custom Attribute" />
                                 </SelectTrigger>

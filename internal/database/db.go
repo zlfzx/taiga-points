@@ -45,7 +45,7 @@ func migrateDB(db *sql.DB) error {
 
 	// add column
 	_, err = db.Exec(`
-		ALTER TABLE "project_settings" ADD COLUMN "member_story_custom_field_filter" TEXT
+		ALTER TABLE "project_settings" ADD COLUMN "user_story_custom_attribute_filter" TEXT
 	`)
 	if err != nil && !strings.Contains(err.Error(), "duplicate column name") {
 		return err

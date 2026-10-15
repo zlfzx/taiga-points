@@ -15,7 +15,7 @@ export interface Project {
     max_points: number;
     role_points: number[];
     status_points: number[];
-    member_story_custom_field_filter: string;
+    user_story_custom_attribute_filter: string;
     // members: Member[];
 }
 

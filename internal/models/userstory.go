@@ -30,6 +30,16 @@ type UserStory struct {
 	URL              string           `json:"url"`
 	ProjectExtraInfo ProjectExtraInfo `json:"project_extra_info"`
 	Tags             [][]string       `json:"tags"`
+
+	// CustomAttribute holds the value of the project's selected custom
+	// attribute (user_story_custom_attribute_filter) for this story. It is empty
+	// when no custom field is configured or the story has no value for it.
+	CustomAttribute *CustomAttributeValue `json:"custom_attribute"`
+}
+
+type CustomAttributeValue struct {
+	Attribute string `json:"attribute"`
+	Value     string `json:"value"`
 }
 
 type UserStoryCustomAttribute struct {
@@ -40,6 +50,17 @@ type UserStoryCustomAttribute struct {
 	Type        string   `json:"type"`
 	Order       int      `json:"order"`
 	Extra       []string `json:"extra"`
+}
+
+// UserStoryCustomAttributesValues maps the per-story custom attribute values
+// returned by Taiga's GET /userstories/custom-attributes-values/{storyID}.
+// AttributesValues keys are custom attribute IDs (as strings), values are the
+// stored values for that story.
+type UserStoryCustomAttributesValues struct {
+	ID               int               `json:"id"`
+	UserStoryID      int               `json:"user_story"`
+	AttributesValues map[string]string `json:"attributes_values"`
+	Version          int               `json:"version"`
 }
 
 type StatusExtraInfo struct {

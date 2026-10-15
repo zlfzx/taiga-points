@@ -13,6 +13,7 @@ import { Ghost, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useRouteLoaderData } from "react-router";
 import type { Project } from "@/models/project";
+import type { UserStoryCustomAttribute } from "@/models/user_story";
 import useSWR from "swr";
 import { Toggle } from "@/components/ui/toggle";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -41,6 +42,19 @@ function ProjectMember() {
         // revalidateOnFocus: false,
         // revalidateOnReconnect: false,
     });
+
+    // fetch custom attribute definitions to resolve the selected one's name for the column header
+    const { data: userStoryCustomAttributes } = useSWR<UserStoryCustomAttribute[]>(
+        project ? `/api/user-story-custom-attributes?project=${project.id}` : null,
+        {
+            fetcher: (url: string) => api.get(url).then(res => res.data.data),
+        }
+    );
+
+    // the custom attribute selected in project settings (user_story_custom_attribute_filter), if any
+    const selectedCustomAttribute = (userStoryCustomAttributes ?? []).find(
+        attr => attr.id.toString() === project?.user_story_custom_attribute_filter
+    );
 
 
 
@@ -181,6 +195,9 @@ function ProjectMember() {
                                     <TableHead>No.</TableHead>
                                     <TableHead>User Story</TableHead>
                                     <TableHead>Status</TableHead>
+                                    {selectedCustomAttribute && (
+                                            <TableHead>{selectedCustomAttribute.name}</TableHead>
+                                        )}
                                     {showPoints && (
                                             <TableHead className="text-center">Story Point</TableHead>
                                         )}
@@ -241,6 +258,13 @@ function ProjectMember() {
                                                     {story.status_extra_info.name}
                                                 </Badge>
                                             </TableCell>
+                                            {selectedCustomAttribute && (
+                                                    <TableCell>
+                                                        {story.custom_attribute
+                                                            ? <span className="text-gray-800">{story.custom_attribute?.value}</span>
+                                                            : <span className="text-muted-foreground">-</span>}
+                                                    </TableCell>
+                                                )}
                                             {showPoints && (
                                                     <TableCell className={ project.status_points.includes(story.status) ? "text-center font-bold" : "text-muted-foreground text-center"}>{story.point}</TableCell>
                                                 )}
@@ -249,7 +273,7 @@ function ProjectMember() {
                                 })}
                                 {member && member.stories.length === 0 && (
                                     <TableRow>
-                                        <TableCell colSpan={showPoints ? 4 : 3} className="text-center text-muted-foreground py-12">
+                                        <TableCell colSpan={3 + (selectedCustomAttribute ? 1 : 0) + (showPoints ? 1 : 0)} className="text-center text-muted-foreground py-12">
                                             <div className="flex flex-col items-center justify-center space-y-3">
                                                 <Ghost className="w-12 h-12 text-gray-300" />
                                                 <p>No user stories assigned to this member yet.</p>
@@ -279,7 +303,7 @@ function ProjectMember() {
                             {showPoints && (
                                     <TableFooter>
                                         <TableRow>
-                                            <TableHead colSpan={3} className="text-right">Total Story Point</TableHead>
+                                            <TableHead colSpan={3 + (selectedCustomAttribute ? 1 : 0)} className="text-right">Total Story Point</TableHead>
                                             <TableHead className="font-bold text-center">{member?.total_point || "0"}</TableHead>
                                         </TableRow>
                                     </TableFooter>
