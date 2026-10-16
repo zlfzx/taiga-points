@@ -5,15 +5,15 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import api from "@/lib/axios";
 import type { Member } from "@/models/member";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import userImg from "@/assets/user.png";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Ghost, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, Ghost, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useRouteLoaderData } from "react-router";
 import type { Project } from "@/models/project";
-import type { UserStoryCustomAttribute } from "@/models/user_story";
+import type { UserStory, UserStoryCustomAttribute } from "@/models/user_story";
 import useSWR from "swr";
 import { Toggle } from "@/components/ui/toggle";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -36,6 +36,7 @@ function ProjectMember() {
     const [openModalMember, setOpenModalMember] = useState<boolean>(false);
     const [search, setSearch] = useState<string>("");
     const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+    const [customAttributeSort, setCustomAttributeSort] = useState<"asc" | "desc" | null>(null);
 
     const { data: members, isLoading: isLoadMembers } = useSWR<Member[]>(project ? `/api/members?project=${project.id}` : null, {
         fetcher: (url: string) => api.get(url).then(res => res.data.data),
@@ -75,6 +76,39 @@ function ProjectMember() {
         project.role_points.length === 0 ||
         (member?.role !== undefined && project.role_points.includes(member.role))
     );
+
+    // stories sorted by the custom attribute value when a sort direction is active;
+    // otherwise the backend order is kept. Empty values are always pushed to the bottom.
+    const sortedStories = useMemo<UserStory[]>(() => {
+        const stories = member && Array.isArray(member.stories) ? member.stories : [];
+        if (!customAttributeSort) {
+            return stories;
+        }
+
+        const direction = customAttributeSort === "asc" ? 1 : -1;
+
+        return [...stories].sort((a, b) => {
+            const aValue = a.custom_attribute?.value ?? "";
+            const bValue = b.custom_attribute?.value ?? "";
+
+            // keep empty values at the bottom regardless of direction
+            if (aValue === "" && bValue === "") return 0;
+            if (aValue === "") return 1;
+            if (bValue === "") return -1;
+
+            // numeric comparison when both values are numbers, string otherwise
+            const aNum = Number(aValue);
+            const bNum = Number(bValue);
+            if (!Number.isNaN(aNum) && !Number.isNaN(bNum)) {
+                return (aNum - bNum) * direction;
+            }
+            return aValue.localeCompare(bValue) * direction;
+        });
+    }, [member, customAttributeSort]);
+
+    const toggleCustomAttributeSort = () => {
+        setCustomAttributeSort(prev => (prev === "asc" ? "desc" : prev === "desc" ? null : "asc"));
+    };
 
     return (
         <>
@@ -196,7 +230,22 @@ function ProjectMember() {
                                     <TableHead>User Story</TableHead>
                                     <TableHead>Status</TableHead>
                                     {selectedCustomAttribute && (
-                                            <TableHead>{selectedCustomAttribute.name}</TableHead>
+                                            <TableHead>
+                                                <button
+                                                    type="button"
+                                                    onClick={toggleCustomAttributeSort}
+                                                    className="inline-flex items-center gap-1 hover:text-gray-900 transition-colors cursor-pointer"
+                                                >
+                                                    {selectedCustomAttribute.name}
+                                                    {customAttributeSort === "asc" ? (
+                                                        <ArrowUp className="w-3.5 h-3.5" />
+                                                    ) : customAttributeSort === "desc" ? (
+                                                        <ArrowDown className="w-3.5 h-3.5" />
+                                                    ) : (
+                                                        <ArrowUpDown className="w-3.5 h-3.5 text-gray-400" />
+                                                    )}
+                                                </button>
+                                            </TableHead>
                                         )}
                                     {showPoints && (
                                             <TableHead className="text-center">Story Point</TableHead>
@@ -204,7 +253,7 @@ function ProjectMember() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {member && Array.isArray(member.stories) && member.stories.map((story, index) => {
+                                {member && sortedStories.map((story, index) => {
                                     // let status = "";
                                     // let statusColor = "";
                                     // if (project && project.us_statuses && Array.isArray(project.us_statuses)) {
