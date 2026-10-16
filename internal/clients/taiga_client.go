@@ -193,6 +193,10 @@ func (c *TaigaClient) GetUserStories(authToken string, params models.UserStoryPa
 		query["assigned_to"] = params.AssignedTo
 	}
 
+	if params.AssignedUsers != "" {
+		query["assigned_users"] = params.AssignedUsers
+	}
+
 	body, err := c.httpClient.Get(c.baseURL+"/userstories", headers, query)
 	if err != nil {
 		return nil, err
