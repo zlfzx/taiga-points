@@ -301,9 +301,9 @@ func (s *TaigaService) GetMember(authToken, memberID string) (models.Membership,
 	// get user stories
 	go func() {
 		userStoryParams := models.UserStoryParams{
-			ProjectID:  projectId,
-			IsArchived: "false",
-			AssignedTo: strconv.Itoa(member.UserID),
+			ProjectID:     projectId,
+			IsArchived:    "false",
+			AssignedUsers: strconv.Itoa(member.UserID),
 		}
 		data, err := s.GetUserStories(authToken, userStoryParams)
 		userStoriesCh <- result[[]models.UserStory]{Data: data, Err: err}
